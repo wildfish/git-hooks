@@ -41,4 +41,4 @@ import sys
 sys.exit(subprocess.call(['flake8'] + sys.argv[1:]))
 ```
 
-This could also exclude file patterns based on an eviroonmet variable etc.
+This could also exclude file patterns based on an environment variable etc.
