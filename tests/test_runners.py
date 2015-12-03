@@ -59,3 +59,16 @@ class HookRunnerRun(TestCase):
 
             for p in found_hooks:
                 subprocess_mock.call.assert_any_call([p] + expected_args)
+
+
+class HookRunnerGetFinder(TestCase):
+    def test_correct_finder_is_returned(self):
+        class Cls(object):
+            pass
+
+        class Runner(runners.HookRunner):
+            finder_class = Cls
+
+        finder = Runner().get_finder()
+
+        self.assertIsInstance(finder, Cls)
