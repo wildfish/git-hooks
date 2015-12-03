@@ -1,5 +1,7 @@
 import subprocess
 
+from . import finders, repo
+
 
 class HookRunner(object):
     finder_class = None
@@ -23,3 +25,13 @@ class HookRunner(object):
             args.extend(k_v)
 
         return sum(subprocess.call([path] + args) for path in self.get_finder())
+
+
+class PreCommitHookRunner(HookRunner):
+    finder_class = finders.PreCommitHookFinder
+
+    def get_process_kwargs(self, **kwargs):
+        kwargs.setdefault('--added-files', repo.added_files())
+        kwargs.setdefault('--modified-files', repo.modified_files())
+        kwargs.setdefault('--deleted-files', repo.deleted_files())
+        return super(PreCommitHookRunner, self).get_process_kwargs(**kwargs)
