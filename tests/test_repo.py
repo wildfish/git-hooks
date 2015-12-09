@@ -75,7 +75,7 @@ class RepoModifiedFiles(TestCase):
             git_dir = os.path.dirname(__file__)
 
             result = Mock()
-            result.index.diff = Mock(return_value=mod_diffs + new_diffs + deleted_diffs)
+            result.head.commit.diff = Mock(return_value=mod_diffs + new_diffs + deleted_diffs)
             result.git_dir = git_dir
 
             get_mock.return_value = result
@@ -83,7 +83,7 @@ class RepoModifiedFiles(TestCase):
             files = repo.modified_files()
 
             self.assertEqual([os.path.join(repo.repo_root(), f) for f in mod], files)
-            result.index.diff.assert_called_once_with('HEAD')
+            result.head.commit.diff.assert_called_once_with()
 
 
 class RepoAddedFiles(TestCase):
@@ -101,7 +101,7 @@ class RepoAddedFiles(TestCase):
             git_dir = os.path.dirname(__file__)
 
             result = Mock()
-            result.index.diff = Mock(return_value=mod_diffs + new_diffs + deleted_diffs)
+            result.head.commit.diff = Mock(return_value=mod_diffs + new_diffs + deleted_diffs)
             result.git_dir = git_dir
 
             get_mock.return_value = result
@@ -109,7 +109,7 @@ class RepoAddedFiles(TestCase):
             files = repo.added_files()
 
             self.assertEqual([os.path.join(repo.repo_root(), f) for f in new], files)
-            result.index.diff.assert_called_once_with('HEAD')
+            result.head.commit.diff.assert_called_once_with()
 
 
 class RepoDeletedFiles(TestCase):
@@ -127,7 +127,7 @@ class RepoDeletedFiles(TestCase):
             git_dir = os.path.dirname(__file__)
 
             result = Mock()
-            result.index.diff = Mock(return_value=mod_diffs + new_diffs + deleted_diffs)
+            result.head.commit.diff = Mock(return_value=mod_diffs + new_diffs + deleted_diffs)
             result.git_dir = git_dir
 
             get_mock.return_value = result
@@ -135,4 +135,4 @@ class RepoDeletedFiles(TestCase):
             files = repo.deleted_files()
 
             self.assertEqual([os.path.join(repo.repo_root(), f) for f in deleted], files)
-            result.index.diff.assert_called_once_with('HEAD')
+            result.head.commit.diff.assert_called_once_with()

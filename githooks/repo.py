@@ -44,7 +44,7 @@ def modified_files():
     :return: A list of absolute paths to all changed files in the repo
     """
     repo_root_dir = repo_root()
-    return [os.path.join(repo_root_dir, d.a_path) for d in get().index.diff('HEAD') if not (d.new_file or d.deleted_file)]
+    return [os.path.join(repo_root_dir, d.a_path) for d in get().head.commit.diff() if not (d.new_file or d.deleted_file)]
 
 
 def added_files():
@@ -54,7 +54,7 @@ def added_files():
     :return: A list of absolute paths to all added files in the repo
     """
     repo_root_dir = repo_root()
-    return [os.path.join(repo_root_dir, d.a_path) for d in get().index.diff('HEAD') if d.new_file]
+    return [os.path.join(repo_root_dir, d.a_path) for d in get().head.commit.diff() if d.new_file]
 
 
 def deleted_files():
@@ -64,4 +64,4 @@ def deleted_files():
     :return: A list of absolute paths to all deleted files in the repo
     """
     repo_root_dir = repo_root()
-    return [os.path.join(repo_root_dir, d.b_path) for d in get().index.diff('HEAD') if d.deleted_file]
+    return [os.path.join(repo_root_dir, d.b_path) for d in get().head.commit.diff() if d.deleted_file]
