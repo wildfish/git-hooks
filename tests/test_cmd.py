@@ -48,7 +48,7 @@ class BaseParseArgs(TestCase):
         lists(text(min_size=1, max_size=10, alphabet=string.ascii_letters), min_size=1, max_size=10),
         text(min_size=1, max_size=10, alphabet=string.ascii_letters),
     )
-    def test_command_has_args_set___args_are_stored_in_the_result(self, sub_parser_names, command_name):
+    def test_command_has_sub_command_arg_set___sub_command_is_called(self, sub_parser_names, command_name):
         class SubCmd(cmd.Base):
             pass
 
