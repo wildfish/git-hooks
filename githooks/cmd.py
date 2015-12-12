@@ -1,5 +1,16 @@
+from __future__ import print_function
+
+import logging
 from argparse import ArgumentParser
 
+import os
+import shutil
+import sys
+
+from . import repo
+
+
+logger = logging.Logger(__file__)
 
 class Base(object):
     """
@@ -17,6 +28,7 @@ class Base(object):
         :param name: The name the command is registered to
         """
         self.name = name
+        self._arg_parser = None
 
     @property
     def sub_parser_dest_name(self):
@@ -27,16 +39,23 @@ class Base(object):
             return '{}__sub_command'.format(self.name)
         return 'sub_command'
 
+    @property
+    def arg_parser(self):
+        if not self._arg_parser:
+            self._arg_parser = ArgumentParser(self.get_description())
+            self.add_args(self._arg_parser)
+            self.register_sub_commands(self._arg_parser)
+
+        return self._arg_parser
+
+
     def parse_args(self):
         """
         Parses the command line arguments
 
         :return: The arguments taken from the command line
         """
-        parser = ArgumentParser(self.get_description())
-        self.add_args(parser)
-        self.register_sub_commands(parser)
-        return parser.parse_args()
+        return self.arg_parser.parse_args()
 
     def add_args(self, parser):
         """
@@ -89,7 +108,8 @@ class Base(object):
         :param args: The arguments parsed from parse_args
         :return: The status code of the action (0 on success)
         """
-        raise NotImplementedError()
+        self.arg_parser.print_help()
+        return 1
 
     def run(self):
         """
@@ -99,24 +119,54 @@ class Base(object):
         """
         args = self.parse_args()
 
-        print(args)
-
         sub_command_name = getattr(args, self.sub_parser_dest_name, None)
         if sub_command_name:
             return self.get_sub_commands()[sub_command_name]().action(args)
         return self.action(args)
-#
-#
-# class Init(Base):
-#     description = 'Initialises the hooks repository'
-#
-#     def action(self, args):
-#         print(args)
-#
-#
-# class Hooks(Base):
-#     description = 'Manages your commit hooks for you!'
-#     sub_commands = {
-#         'init': Init
-#     }
-#
+
+
+class Init(Base):
+    description = 'Initialises the hooks repository'
+
+    def add_args(self, parser):
+        parser.add_argument('-y', '--overwrite', help='Silently overwrite existing hooks', action='store_true', dest='overwrite')
+        parser.add_argument('-n', '--no-overwrite', help='Silently avoid overwriting existing hooks', action='store_true', dest='no_overwrite')
+
+    def action(self, args):
+        if args.overwrite and args.no_overwrite:
+            logger.error('Both the overwrite and no overwrite flags were set')
+            return 1
+
+        hook_script_dir = os.path.join(os.path.dirname(__file__), 'hook_scripts')
+        hooks_to_initialise = os.listdir(hook_script_dir)
+
+        init_dir = os.path.join(repo.repo_root(), '.git', 'hooks')
+
+        for hook_name in hooks_to_initialise:
+            src = os.path.join(hook_script_dir, hook_name)
+            dst = os.path.join(init_dir, hook_name)
+
+            if not args.overwrite and os.path.exists(dst):
+                if args.no_overwrite:
+                    continue
+
+                logger.info('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(hook_name))
+                c = input()
+                if not(c.lower() == 'y' or c.lower() == 'yes'):
+                    continue
+
+            shutil.copy(src, dst)
+            try:
+                os.mkdir(dst + '.d')
+            except FileExistsError:
+                pass
+
+        return 0
+
+
+class Hooks(Base):
+    description = 'Manages your commit hooks for you!'
+    sub_commands = {
+        'init': Init
+    }
+
