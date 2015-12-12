@@ -80,7 +80,7 @@ class PreCommitHookRunnerFinderClass(TestCase):
 
 
 class PreCommitHookRunnerGetProcessKwargs(TestCase):
-    def test_result_contains_the_added_files(self):
+    def test_result_contains_added_modified_and_deleted(self):
         with patch('githooks.repo.added_files', Mock(return_value=[])), \
              patch('githooks.repo.modified_files', Mock(return_value=[])), \
              patch('githooks.repo.deleted_files', Mock(return_value=[])):
@@ -121,3 +121,19 @@ class PreCommitHookRunnerGetProcessKwargs(TestCase):
             kwargs = runners.PreCommitHookRunner().get_process_kwargs()
 
             self.assertEqual(deleted_files, kwargs['--deleted-files'])
+
+
+class PreCommitHookRunnerGetProcessArgs(TestCase):
+    @given(
+        lists(text(min_size=1, max_size=10), max_size=10),
+        lists(text(min_size=1, max_size=10), max_size=10),
+        lists(text(min_size=1, max_size=10), max_size=10),
+    )
+    def test_result_contains_the_added_files(self, added, modified, deleted):
+        with patch('githooks.repo.added_files', Mock(return_value=added)), \
+             patch('githooks.repo.modified_files', Mock(return_value=modified)), \
+             patch('githooks.repo.deleted_files', Mock(return_value=deleted)):
+
+            args = runners.PreCommitHookRunner().get_process_args()
+
+            self.assertSequenceEqual(added + modified, args)
