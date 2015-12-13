@@ -13,7 +13,7 @@ from unittest import TestCase
 from hypothesis import given
 from hypothesis.strategies import text, dictionaries, lists, integers
 
-from githooks import cmd
+from githooks import cmd, utils
 
 
 class BaseSubParserDestName(TestCase):
@@ -140,8 +140,7 @@ class CmdInit(TestCase):
         self.hooks_dir = os.path.join(self.repo_dir, '.git', 'hooks')
         os.makedirs(self.hooks_dir)
 
-        self.orig_nooks_dir = os.path.join(os.path.dirname(__file__), '..', 'githooks', 'hook_scripts')
-        self.hook_names = os.listdir(self.orig_nooks_dir)
+        self.hook_names = utils.get_hook_names()
 
     def tearDown(self):
         shutil.rmtree(self.repo_dir)
@@ -173,7 +172,7 @@ class CmdInit(TestCase):
             self.assertGreater(len(self.hook_names), 0)
             for name in self.hook_names:
                 with open(os.path.join(self.hooks_dir, name)) as f, \
-                        open(os.path.join(self.orig_nooks_dir, name)) as new:
+                        open(os.path.join(utils.get_hook_script_dir(), name)) as new:
                     self.assertEqual(new.read(), f.read())
 
                 log_mock.info.assert_called_once_with('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
@@ -213,7 +212,7 @@ class CmdInit(TestCase):
             self.assertGreater(len(self.hook_names), 0)
             for name in self.hook_names:
                 with open(os.path.join(self.hooks_dir, name)) as f, \
-                        open(os.path.join(self.orig_nooks_dir, name)) as new:
+                        open(os.path.join(utils.get_hook_script_dir(), name)) as new:
                     self.assertEqual(new.read(), f.read())
 
                 log_mock.info.assert_not_called()

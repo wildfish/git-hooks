@@ -3,11 +3,17 @@ from __future__ import print_function
 import logging
 from argparse import ArgumentParser
 
+try:
+    from urllib.parse import urlsplit
+except ImportError:
+    from urlparse import urlsplit
+
+import posixpath
+import requests
 import os
 import shutil
-import sys
 
-from . import repo
+from . import utils, repo
 
 
 logger = logging.Logger(__file__)
@@ -137,13 +143,10 @@ class Init(Base):
             logger.error('Both the overwrite and no overwrite flags were set')
             return 1
 
-        hook_script_dir = os.path.join(os.path.dirname(__file__), 'hook_scripts')
-        hooks_to_initialise = os.listdir(hook_script_dir)
-
         init_dir = os.path.join(repo.repo_root(), '.git', 'hooks')
 
-        for hook_name in hooks_to_initialise:
-            src = os.path.join(hook_script_dir, hook_name)
+        for hook_name in utils.get_hook_names():
+            src = os.path.join(utils.get_hook_script_dir(), hook_name)
             dst = os.path.join(init_dir, hook_name)
 
             if not args.overwrite and os.path.exists(dst):
@@ -162,6 +165,35 @@ class Init(Base):
                 pass
 
         return 0
+
+
+class Install(Base):
+    description = 'Installs the selected hook'
+
+    def _install_hooks(self, hook_name, hooks, upgrade):
+        type_repo = utils.get_hook_type_directory(hook_name)
+
+        for hook in hooks:
+            path = urlsplit(hook).path
+            filename = posixpath.basename(path)
+
+            if not upgrade and os.path.exists(os.path.join(type_repo, filename)):
+                logger.info('"{}" is already installed, use "--upgrade" to upgrade the hook to the newest version.')
+                continue
+
+            response = requests.get(hook)
+
+            with open(os.path.join(type_repo, filename), 'w') as f:
+                f.write(response.content)
+
+    def add_args(self, parser):
+        parser.add_argument('hook_type', nargs='?', help='The hook type to install. If no hook type is given the config from "githooks.cfg" or "setup.cfg" is used', default=None, choices=utils.get_hook_names())
+        parser.add_argument('hooks', nargs='*', help='The urls for hooks to install')
+        parser.add_argument('-u', '--upgrade', help='Flag if hooks should be upgraded with the remote version', action='store_true', dest='upgrade')
+
+    def action(self, args):
+        if args.hook_type:
+            self._install_hooks(args.hook_type, args.hooks, args.upgrade)
 
 
 class Hooks(Base):
