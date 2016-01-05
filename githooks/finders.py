@@ -16,8 +16,7 @@ class HookFinder(object):
         self.hook_type = hook_type
 
     def __iter__(self):
-        git_dir = repo.get().git_dir
-        hook_glob = os.path.join(git_dir, 'hooks', self.hook_type + '.d', '*')
+        hook_glob = os.path.join(repo.hook_type_directory(self.hook_type), '*')
 
         for p in glob.glob(hook_glob):
             yield p

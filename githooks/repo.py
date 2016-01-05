@@ -65,3 +65,15 @@ def deleted_files():
     """
     repo_root_dir = repo_root()
     return [os.path.join(repo_root_dir, d.b_path) for d in get().head.commit.diff() if d.deleted_file]
+
+
+def hook_type_directory(hook_type):
+    """
+    Gets the directory to install hooks of the specified type to
+
+    :param hook_type: the type of hook to get the install directory for
+    :return: The path to install hooks to
+    """
+    return os.path.join(repo_root(), '.git', 'hooks', hook_type + '.d')
+
+

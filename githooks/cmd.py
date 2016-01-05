@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import logging
 from argparse import ArgumentParser
+from configparser import ConfigParser
 
 try:
     from urllib.parse import urlsplit
@@ -170,8 +171,12 @@ class Init(Base):
 class Install(Base):
     description = 'Installs the selected hook'
 
+    def __init__(self, *args, **kwargs):
+        self._config = None
+        super(Install, self).__init__(*args, **kwargs)
+
     def _install_hooks(self, hook_name, hooks, upgrade):
-        type_repo = utils.get_hook_type_directory(hook_name)
+        type_repo = repo.hook_type_directory(hook_name)
 
         for hook in hooks:
             path = urlsplit(hook).path
@@ -183,8 +188,26 @@ class Install(Base):
 
             response = requests.get(hook)
 
-            with open(os.path.join(type_repo, filename), 'w') as f:
+            with open(os.path.join(type_repo, filename), 'wb') as f:
                 f.write(response.content)
+
+    @property
+    def config(self):
+        if self._config is None:
+            parser = ConfigParser()
+
+            if os.path.exists(os.path.join(repo.repo_root(), 'git-hooks.cfg')):
+                parser.read(os.path.join(repo.repo_root(), 'git-hooks.cfg'))
+                self._config = {
+                    k: v.split('\n') for k, v in parser['install'].items()
+                }
+            elif os.path.exists(os.path.join(repo.repo_root(), 'setup.cfg')):
+                parser.read(os.path.join(repo.repo_root(), 'setup.cfg'))
+                self._config = {
+                    k: v.split('\n') for k, v in parser['git-hooks.install'].items()
+                }
+
+        return self._config
 
     def add_args(self, parser):
         parser.add_argument('hook_type', nargs='?', help='The hook type to install. If no hook type is given the config from "githooks.cfg" or "setup.cfg" is used', default=None, choices=utils.get_hook_names())
@@ -194,11 +217,14 @@ class Install(Base):
     def action(self, args):
         if args.hook_type:
             self._install_hooks(args.hook_type, args.hooks, args.upgrade)
+        else:
+            for hook_type, hooks in self.config.items():
+                self._install_hooks(hook_type, hooks, args.upgrade)
 
 
 class Hooks(Base):
     description = 'Manages your commit hooks for you!'
     sub_commands = {
-        'init': Init
+        'init': Init,
+        'install': Install
     }
-
