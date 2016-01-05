@@ -1,1 +1,2 @@
 recursive-include githooks/hook_scripts *
+recursive-include scripts *

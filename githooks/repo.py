@@ -1,5 +1,4 @@
 import git
-import sys
 import os
 
 _repo = None
@@ -14,7 +13,7 @@ def get():
     """
     global _repo
     if not _repo:
-        _repo = git.Repo(os.path.dirname(sys.argv[0]), search_parent_directories=True)
+        _repo = git.Repo(os.getcwd(), search_parent_directories=True)
     return _repo
 
 

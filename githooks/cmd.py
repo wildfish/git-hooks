@@ -17,7 +17,7 @@ import shutil
 from . import utils, repo
 
 
-logger = logging.Logger(__file__)
+logger = logging.getLogger(__name__)
 
 class Base(object):
     """

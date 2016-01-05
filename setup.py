@@ -1,7 +1,8 @@
+import os
 from setuptools import setup
 
 setup(
-    name='git-hooks',
+    name='githooks',
     version='',
     packages=['githooks'],
     url='https://github.com/OmegaDroid/git-hooks',
@@ -11,6 +12,10 @@ setup(
     description='Package manager for installing git commit hooks',
     include_package_data=True,
     package_data={
-        'githooks/hook_scripts': ['*']
-    }
+        'githooks/hook_scripts': ['*'],
+        'scripts': ['*'],
+    },
+    scripts=[
+        os.path.join('scripts', 'git-hooks')
+    ]
 )

@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+import subprocess
+import sys
+
+from githooks import args
+
+files = args.pre_commit()
+
+sys.exit(subprocess.call(['flake8'] + files))
