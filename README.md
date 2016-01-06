@@ -64,7 +64,8 @@ from githooks import args
 
 files = [f for f in args.pre_commit().files if re.match('.*\.py$', f)]
 
-sys.exit(subprocess.call(['flake8'] + files))
+if files:
+    sys.exit(subprocess.call(['flake8'] + files))
 ```
 
 This could also exclude file patterns based on an environment variable etc.
