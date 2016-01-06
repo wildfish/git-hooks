@@ -4,3 +4,4 @@ nose
 hypothesis
 coverage
 responses
+flake8
