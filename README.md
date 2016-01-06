@@ -56,12 +56,13 @@ For example a script that tests `flake8` may look something like:
 
 ```
 #!/usr/bin/env python
+
 import subprocess
 import sys
 
 from githooks import args
 
-files = args.pre_commit()
+files = [f for f in args.pre_commit().files if re.match('.*\.py$', f)]
 
 sys.exit(subprocess.call(['flake8'] + files))
 ```
