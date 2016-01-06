@@ -2,7 +2,7 @@ from random import randint
 from unittest import TestCase
 
 from hypothesis import given
-from hypothesis.strategies import builds, lists, text, dictionaries
+from hypothesis.strategies import lists, text, dictionaries
 from mock import patch, Mock
 
 from githooks import runners, finders
@@ -44,8 +44,10 @@ class HookRunnerRun(TestCase):
     def test_hook_runner_is_ran___subprocess_is_called_for_each_hook_with_the_correct_args(self, process_args, process_kwargs, found_hooks):
         with patch('githooks.runners.subprocess') as subprocess_mock:
             expected_args = list(process_args)
-            for k_v in sorted(process_kwargs.items()):
-                expected_args.extend(k_v)
+            for k, v in sorted(process_kwargs.items()):
+                if v:
+                    expected_args.append(k)
+                    expected_args.extend(v)
 
             runner = FakeRunner(process_args, process_kwargs, FakeHookFinder(found_hooks))
 
@@ -82,8 +84,8 @@ class PreCommitHookRunnerFinderClass(TestCase):
 class PreCommitHookRunnerGetProcessKwargs(TestCase):
     def test_result_contains_added_modified_and_deleted(self):
         with patch('githooks.repo.added_files', Mock(return_value=[])), \
-             patch('githooks.repo.modified_files', Mock(return_value=[])), \
-             patch('githooks.repo.deleted_files', Mock(return_value=[])):
+                patch('githooks.repo.modified_files', Mock(return_value=[])), \
+                patch('githooks.repo.deleted_files', Mock(return_value=[])):
 
             kwargs = runners.PreCommitHookRunner().get_process_kwargs()
 
@@ -95,8 +97,8 @@ class PreCommitHookRunnerGetProcessKwargs(TestCase):
     @given(lists(text(min_size=1, max_size=10), max_size=10))
     def test_result_contains_the_added_files(self, added_files):
         with patch('githooks.repo.added_files', Mock(return_value=added_files)), \
-             patch('githooks.repo.modified_files', Mock(return_value=[])), \
-             patch('githooks.repo.deleted_files', Mock(return_value=[])):
+                patch('githooks.repo.modified_files', Mock(return_value=[])), \
+                patch('githooks.repo.deleted_files', Mock(return_value=[])):
 
             kwargs = runners.PreCommitHookRunner().get_process_kwargs()
 
@@ -105,8 +107,8 @@ class PreCommitHookRunnerGetProcessKwargs(TestCase):
     @given(lists(text(min_size=1, max_size=10), max_size=10))
     def test_result_contains_the_modified_files(self, modified_files):
         with patch('githooks.repo.added_files', Mock(return_value=[])), \
-             patch('githooks.repo.modified_files', Mock(return_value=modified_files)), \
-             patch('githooks.repo.deleted_files', Mock(return_value=[])):
+                patch('githooks.repo.modified_files', Mock(return_value=modified_files)), \
+                patch('githooks.repo.deleted_files', Mock(return_value=[])):
 
             kwargs = runners.PreCommitHookRunner().get_process_kwargs()
 
@@ -115,8 +117,8 @@ class PreCommitHookRunnerGetProcessKwargs(TestCase):
     @given(lists(text(min_size=1, max_size=10), max_size=10))
     def test_result_contains_the_deleted_files(self, deleted_files):
         with patch('githooks.repo.added_files', Mock(return_value=[])), \
-             patch('githooks.repo.modified_files', Mock(return_value=[])), \
-             patch('githooks.repo.deleted_files', Mock(return_value=deleted_files)):
+                patch('githooks.repo.modified_files', Mock(return_value=[])), \
+                patch('githooks.repo.deleted_files', Mock(return_value=deleted_files)):
 
             kwargs = runners.PreCommitHookRunner().get_process_kwargs()
 
@@ -131,8 +133,8 @@ class PreCommitHookRunnerGetProcessArgs(TestCase):
     )
     def test_result_contains_the_added_files(self, added, modified, deleted):
         with patch('githooks.repo.added_files', Mock(return_value=added)), \
-             patch('githooks.repo.modified_files', Mock(return_value=modified)), \
-             patch('githooks.repo.deleted_files', Mock(return_value=deleted)):
+                patch('githooks.repo.modified_files', Mock(return_value=modified)), \
+                patch('githooks.repo.deleted_files', Mock(return_value=deleted)):
 
             args = runners.PreCommitHookRunner().get_process_args()
 

@@ -1,5 +1,4 @@
 import string
-import sys
 from unittest import TestCase
 
 import os
@@ -27,7 +26,7 @@ class RepoGet(TestCase):
 
         self.assertEqual('git repo', repo_obj)
         git_mock.Repo.assert_called_once_with(
-            os.path.dirname(sys.argv[0]),
+            os.getcwd(),
             search_parent_directories=True,
         )
 
