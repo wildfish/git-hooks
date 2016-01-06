@@ -62,8 +62,10 @@ class HookRunner(object):
 
         args = list(self.get_process_args())
 
-        for k_v in sorted(self.get_process_kwargs().items()):
-            args.extend(k_v)
+        for k, v in sorted(self.get_process_kwargs().items()):
+            if v:
+                args.append(k)
+                args.extend(v)
 
         res = 0
         for path in self.get_finder():
