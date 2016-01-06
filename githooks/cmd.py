@@ -183,7 +183,7 @@ class Install(Base):
             filename = posixpath.basename(path)
 
             if not upgrade and os.path.exists(os.path.join(type_repo, filename)):
-                logger.info('"{}" is already installed, use "--upgrade" to upgrade the hook to the newest version.')
+                logger.info('"{}" is already installed, use "--upgrade" to upgrade the hook to the newest version.'.format(filename))
                 continue
 
             response = requests.get(hook)
