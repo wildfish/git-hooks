@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import logging
+import stat
 from argparse import ArgumentParser
 from configparser import ConfigParser
 
@@ -18,6 +19,7 @@ from . import utils, repo
 
 
 logger = logging.getLogger(__name__)
+
 
 class Base(object):
     """
@@ -54,7 +56,6 @@ class Base(object):
             self.register_sub_commands(self._arg_parser)
 
         return self._arg_parser
-
 
     def parse_args(self):
         """
@@ -160,6 +161,10 @@ class Init(Base):
                     continue
 
             shutil.copy(src, dst)
+
+            st = os.stat(dst)
+            os.chmod(dst, st.st_mode | stat.S_IEXEC)
+
             try:
                 os.mkdir(dst + '.d')
             except FileExistsError:
@@ -188,8 +193,12 @@ class Install(Base):
 
             response = requests.get(hook)
 
-            with open(os.path.join(type_repo, filename), 'wb') as f:
+            dst = os.path.join(type_repo, filename)
+            with open(dst, 'wb') as f:
                 f.write(response.content)
+
+            st = os.stat(dst)
+            os.chmod(dst, st.st_mode | stat.S_IEXEC)
 
     @property
     def config(self):
