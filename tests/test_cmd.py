@@ -170,9 +170,9 @@ class CmdInit(TestCase):
 
                     self.assertGreater(len(self.hook_names), 0)
                     for name in self.hook_names:
-                        with open(os.path.join(self.hooks_dir, name)) as f, \
-                                open(os.path.join(utils.get_hook_script_dir(), name)) as new:
-                            self.assertEqual(new.read(), f.read())
+                        with open(os.path.join(self.hooks_dir, name)) as f:
+                            with open(os.path.join(utils.get_hook_script_dir(), name)) as new:
+                                self.assertEqual(new.read(), f.read())
 
                         log_mock.info.assert_called_once_with('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
 
@@ -247,18 +247,18 @@ class CmdInit(TestCase):
                 self.assertTrue(os.path.exists(os.path.join(self.hooks_dir, name + '.d')))
 
     def test_both_the_overwrite_and_no_overrwrtie_flags_are_set___the_user_is_given_an_error_and_the_process_exits(self):
-        with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)), \
-                patch('githooks.cmd.logger') as log_mock:
-            sys.argv = ['foo', 'init', '-y', '-n']
+        with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)):
+            with patch('githooks.cmd.logger') as log_mock:
+                sys.argv = ['foo', 'init', '-y', '-n']
 
-            self.assertEqual(1, cmd.Hooks().run())
+                self.assertEqual(1, cmd.Hooks().run())
 
-            self.assertGreater(len(self.hook_names), 0)
-            for name in self.hook_names:
-                self.assertFalse(os.path.exists(os.path.join(self.hooks_dir, name)))
-                self.assertFalse(os.path.exists(os.path.join(self.hooks_dir, name + '.d')))
+                self.assertGreater(len(self.hook_names), 0)
+                for name in self.hook_names:
+                    self.assertFalse(os.path.exists(os.path.join(self.hooks_dir, name)))
+                    self.assertFalse(os.path.exists(os.path.join(self.hooks_dir, name + '.d')))
 
-            log_mock.error.assert_called_once_with('Both the overwrite and no overwrite flags were set')
+                log_mock.error.assert_called_once_with('Both the overwrite and no overwrite flags were set')
 
 
 class CmdInstall(TestCase):
@@ -284,23 +284,24 @@ class CmdInstall(TestCase):
         try:
             url = 'http://' + url_front + '/' + file_name
 
-            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)), patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
-                sys.argv = ['foo', 'init', '-y']
-                cmd.Hooks().run()
+            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)):
+                with patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
+                    sys.argv = ['foo', 'init', '-y']
+                    cmd.Hooks().run()
 
-                responses.add(
-                    responses.GET,
-                    url,
-                    body=content,
-                    status=200,
-                )
+                    responses.add(
+                        responses.GET,
+                        url,
+                        body=content,
+                        status=200,
+                    )
 
-                sys.argv = ['foo', 'install', hook_name, url]
+                    sys.argv = ['foo', 'install', hook_name, url]
 
-                cmd.Hooks().run()
+                    cmd.Hooks().run()
 
-                with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
-                    self.assertEqual(content, f.read())
+                    with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
+                        self.assertEqual(content, f.read())
         finally:
             shutil.rmtree(repo_dir)
 
@@ -320,26 +321,27 @@ class CmdInstall(TestCase):
         try:
             url = 'http://' + url_front + '/' + file_name
 
-            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)), patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
-                sys.argv = ['foo', 'init', '-y']
-                cmd.Hooks().run()
+            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)):
+                with patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
+                    sys.argv = ['foo', 'init', '-y']
+                    cmd.Hooks().run()
 
-                with open(os.path.join(repo.hook_type_directory(hook_name), file_name), 'w') as f:
-                    f.write(orig_content)
+                    with open(os.path.join(repo.hook_type_directory(hook_name), file_name), 'w') as f:
+                        f.write(orig_content)
 
-                responses.add(
-                    responses.GET,
-                    url,
-                    body=new_content,
-                    status=200,
-                )
+                    responses.add(
+                        responses.GET,
+                        url,
+                        body=new_content,
+                        status=200,
+                    )
 
-                sys.argv = ['foo', 'install', hook_name, url]
+                    sys.argv = ['foo', 'install', hook_name, url]
 
-                cmd.Hooks().run()
+                    cmd.Hooks().run()
 
-                with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
-                    self.assertEqual(orig_content, f.read())
+                    with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
+                        self.assertEqual(orig_content, f.read())
         finally:
             shutil.rmtree(repo_dir)
 
@@ -359,26 +361,27 @@ class CmdInstall(TestCase):
         try:
             url = 'http://' + url_front + '/' + file_name
 
-            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)), patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
-                sys.argv = ['foo', 'init', '-y']
-                cmd.Hooks().run()
+            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)):
+                with patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
+                    sys.argv = ['foo', 'init', '-y']
+                    cmd.Hooks().run()
 
-                with open(os.path.join(repo.hook_type_directory(hook_name), file_name), 'w') as f:
-                    f.write(orig_content)
+                    with open(os.path.join(repo.hook_type_directory(hook_name), file_name), 'w') as f:
+                        f.write(orig_content)
 
-                responses.add(
-                    responses.GET,
-                    url,
-                    body=new_content,
-                    status=200,
-                )
+                    responses.add(
+                        responses.GET,
+                        url,
+                        body=new_content,
+                        status=200,
+                    )
 
-                sys.argv = ['foo', 'install', hook_name, url, '--upgrade']
+                    sys.argv = ['foo', 'install', hook_name, url, '--upgrade']
 
-                cmd.Hooks().run()
+                    cmd.Hooks().run()
 
-                with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
-                    self.assertEqual(new_content, f.read())
+                    with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
+                        self.assertEqual(new_content, f.read())
         finally:
             shutil.rmtree(repo_dir)
 
@@ -455,17 +458,18 @@ class CmdInstall(TestCase):
             setup_config.write(f)
 
         try:
-            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)), patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
-                sys.argv = ['foo', 'init', '-y']
-                cmd.Hooks().run()
+            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)):
+                with patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
+                    sys.argv = ['foo', 'init', '-y']
+                    cmd.Hooks().run()
 
-                sys.argv = ['foo', 'install']
+                    sys.argv = ['foo', 'install']
 
-                cmd.Hooks().run()
+                    cmd.Hooks().run()
 
-                for hook_type, hooks in hook_configs.items():
-                    for hook in hooks:
-                        self.assertTrue(os.path.exists(os.path.join(repo.hook_type_directory(hook_type), hook['filename'])))
+                    for hook_type, hooks in hook_configs.items():
+                        for hook in hooks:
+                            self.assertTrue(os.path.exists(os.path.join(repo.hook_type_directory(hook_type), hook['filename'])))
         finally:
             shutil.rmtree(repo_dir)
 
@@ -509,16 +513,17 @@ class CmdInstall(TestCase):
             setup_config.write(f)
 
         try:
-            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)), patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
-                sys.argv = ['foo', 'init', '-y']
-                cmd.Hooks().run()
+            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)):
+                with patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
+                    sys.argv = ['foo', 'init', '-y']
+                    cmd.Hooks().run()
 
-                sys.argv = ['foo', 'install']
+                    sys.argv = ['foo', 'install']
 
-                cmd.Hooks().run()
+                    cmd.Hooks().run()
 
-                for hook_type, hooks in setup_configs.items():
-                    for hook in hooks:
-                        self.assertTrue(os.path.exists(os.path.join(repo.hook_type_directory(hook_type), hook['filename'])))
+                    for hook_type, hooks in setup_configs.items():
+                        for hook in hooks:
+                            self.assertTrue(os.path.exists(os.path.join(repo.hook_type_directory(hook_type), hook['filename'])))
         finally:
             shutil.rmtree(repo_dir)
