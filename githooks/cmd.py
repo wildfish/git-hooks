@@ -207,12 +207,12 @@ class Install(Base):
             if os.path.exists(os.path.join(repo.repo_root(), 'git-hooks.cfg')):
                 parser.read(os.path.join(repo.repo_root(), 'git-hooks.cfg'))
                 self._config = dict(
-                    (k, v.split('\n')) for k, v in parser['install'].items()
+                    (k, v.split('\n')) for k, v in parser.items('install')
                 )
             elif os.path.exists(os.path.join(repo.repo_root(), 'setup.cfg')):
                 parser.read(os.path.join(repo.repo_root(), 'setup.cfg'))
                 self._config = dict(
-                    (k, v.split('\n')) for k, v in parser['git-hooks.install'].items()
+                    (k, v.split('\n')) for k, v in parser.items('git-hooks.install')
                 )
 
         return self._config
