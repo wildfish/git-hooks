@@ -159,7 +159,7 @@ class CmdInit(TestCase):
 
     def test_user_has_preexisitng_hooks_user_responds_yes_to_all___all_are_overwritten(self):
         with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)), \
-                patch('githooks.cmd.input', Mock(return_value='yes')), \
+                patch('githooks.cmd.get_input', Mock(return_value='yes')), \
                 patch('githooks.cmd.logger') as log_mock:
 
             sys.argv = ['foo', 'init']
@@ -180,7 +180,7 @@ class CmdInit(TestCase):
 
     def test_user_has_preexisitng_hooks_user_responds_no_to_all___no_are_overwritten(self):
         with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)), \
-                patch('githooks.cmd.input', Mock(return_value='no')), \
+                patch('githooks.cmd.get_input', Mock(return_value='no')), \
                 patch('githooks.cmd.logger') as log_mock:
 
             sys.argv = ['foo', 'init']

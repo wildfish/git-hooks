@@ -21,6 +21,10 @@ from . import utils, repo
 logger = logging.getLogger(__name__)
 
 
+def get_input():
+    return input()
+
+
 class Base(object):
     """
     The base command object
@@ -156,7 +160,7 @@ class Init(Base):
                     continue
 
                 logger.info('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(hook_name))
-                c = input()
+                c = get_input()
                 if not(c.lower() == 'y' or c.lower() == 'yes'):
                     continue
 
