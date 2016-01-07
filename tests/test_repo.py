@@ -1,5 +1,5 @@
 import string
-from unittest import TestCase
+from unittest2 import TestCase
 
 import os
 from hypothesis import given

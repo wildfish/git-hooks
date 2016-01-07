@@ -9,7 +9,7 @@ import shutil
 import tempfile
 from mock import Mock, patch
 from random import choice
-from unittest import TestCase
+from unittest2 import TestCase
 
 from hypothesis import given, assume
 from hypothesis.strategies import text, dictionaries, lists, integers, sampled_from, fixed_dictionaries
@@ -54,9 +54,9 @@ class BaseParseArgs(TestCase):
             pass
 
         class Cmd(cmd.Base):
-            sub_commands = {
-                n: SubCmd for n in sub_parser_names
-            }
+            sub_commands = dict(
+                (n, SubCmd) for n in sub_parser_names
+            )
 
         selected = choice(sub_parser_names)
         sys.argv = ['foo', selected]
