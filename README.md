@@ -1,4 +1,6 @@
 # git-hooks
+[![Build Status](https://travis-ci.org/OmegaDroid/git-hooks.svg?branch=master)](https://travis-ci.org/OmegaDroid/git-hooks)
+
 A tool for organising your hooks
 
 # Usage
