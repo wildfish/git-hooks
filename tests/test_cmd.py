@@ -409,13 +409,13 @@ class CmdInstall(TestCase):
         repo_dir = self.make_repo_dir()
 
         config = ConfigParser()
-        config['install'] = {}
+        hook_type_setting = {}
         for hook_type, hooks in hook_configs.items():
-            config['install'].setdefault(hook_type, '')
+            hook_type_setting.setdefault(hook_type, '')
 
             for hook in hooks:
                 url = 'http://' + hook['front'] + '/' + hook['filename']
-                config['install'][hook_type] += url + '\n'
+                hook_type_setting[hook_type] += url + '\n'
 
                 responses.add(
                     responses.GET,
@@ -423,18 +423,22 @@ class CmdInstall(TestCase):
                     body=hook['content'],
                     status=200,
                 )
+
+        config.add_section('install')
+        for hook_type, value in hook_type_setting.items():
+            config.set('install', hook_type, value)
 
         with open(os.path.join(repo_dir, 'git-hooks.cfg'), 'w') as f:
             config.write(f)
 
         setup_config = ConfigParser()
-        setup_config['git-hooks.install'] = {}
+        hook_type_setting = {}
         for hook_type, hooks in setup_configs.items():
-            setup_config['git-hooks.install'].setdefault(hook_type, '')
+            hook_type_setting.setdefault(hook_type, '')
 
             for hook in hooks:
                 url = 'http://' + hook['front'] + '/' + hook['filename']
-                setup_config['git-hooks.install'][hook_type] += url + '\n'
+                hook_type_setting[hook_type] += url + '\n'
 
                 responses.add(
                     responses.GET,
@@ -442,6 +446,10 @@ class CmdInstall(TestCase):
                     body=hook['content'],
                     status=200,
                 )
+
+        setup_config.add_section('git-hooks.install')
+        for hook_type, value in hook_type_setting.items():
+            setup_config.set('git-hooks.install', hook_type, value)
 
         with open(os.path.join(repo_dir, 'setup.cfg'), 'w') as f:
             setup_config.write(f)
@@ -478,13 +486,13 @@ class CmdInstall(TestCase):
         repo_dir = self.make_repo_dir()
 
         setup_config = ConfigParser()
-        setup_config['git-hooks.install'] = {}
+        hook_type_setting = {}
         for hook_type, hooks in setup_configs.items():
-            setup_config['git-hooks.install'].setdefault(hook_type, '')
+            hook_type_setting.setdefault(hook_type, '')
 
             for hook in hooks:
                 url = 'http://' + hook['front'] + '/' + hook['filename']
-                setup_config['git-hooks.install'][hook_type] += url + '\n'
+                hook_type_setting[hook_type] += url + '\n'
 
                 responses.add(
                     responses.GET,
@@ -492,6 +500,10 @@ class CmdInstall(TestCase):
                     body=hook['content'],
                     status=200,
                 )
+
+        setup_config.add_section('git-hooks.install')
+        for hook_type, value in hook_type_setting.items():
+            setup_config.set('git-hooks.install', hook_type, value)
 
         with open(os.path.join(repo_dir, 'setup.cfg'), 'w') as f:
             setup_config.write(f)
