@@ -3,12 +3,6 @@ from __future__ import print_function
 import logging
 import stat
 from argparse import ArgumentParser
-from configparser import ConfigParser
-
-try:
-    from urllib.parse import urlsplit
-except ImportError:
-    from urlparse import urlsplit
 
 import posixpath
 import requests
@@ -16,6 +10,7 @@ import os
 import shutil
 
 from . import utils, repo
+from .compat import ConfigParser, urlsplit
 
 
 logger = logging.getLogger(__name__)

@@ -1,12 +1,6 @@
 import string
 
 import sys
-
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
-
 import os
 import responses
 import shutil
@@ -19,6 +13,7 @@ from hypothesis import given, assume
 from hypothesis.strategies import text, dictionaries, lists, integers, sampled_from, fixed_dictionaries
 
 from githooks import cmd, utils, repo
+from githooks.compat import ConfigParser
 
 
 class BaseSubParserDestName(TestCase):
