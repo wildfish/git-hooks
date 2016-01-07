@@ -154,7 +154,7 @@ class Init(Base):
                 if args.no_overwrite:
                     continue
 
-                logger.info(u'A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(hook_name))
+                logger.info(u'A "{0}" already exists for this repository. Do you want to continue? y/[N]'.format(hook_name))
                 c = get_input()
                 if not(c.lower() == 'y' or c.lower() == 'yes'):
                     continue
@@ -187,7 +187,7 @@ class Install(Base):
             filename = posixpath.basename(path)
 
             if not upgrade and os.path.exists(os.path.join(type_repo, filename)):
-                logger.info(u'"{}" is already installed, use "--upgrade" to upgrade the hook to the newest version.'.format(filename))
+                logger.info(u'"{0}" is already installed, use "--upgrade" to upgrade the hook to the newest version.'.format(filename))
                 continue
 
             response = requests.get(hook)
