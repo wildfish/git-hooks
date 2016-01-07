@@ -11,6 +11,6 @@ except ImportError:
 try:
     FileExistsException = FileExistsError
 except NameError:
-    FileExistsException = FileExists  # noqa
+    FileExistsException = OSError
 
 __all__ = [ConfigParser, urlsplit, FileExistsError]
