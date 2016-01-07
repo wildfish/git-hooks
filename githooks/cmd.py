@@ -10,7 +10,7 @@ import os
 import shutil
 
 from . import utils, repo
-from .compat import ConfigParser, urlsplit
+from .compat import ConfigParser, urlsplit, FileExistsException
 
 
 logger = logging.getLogger(__name__)
@@ -154,7 +154,7 @@ class Init(Base):
                 if args.no_overwrite:
                     continue
 
-                logger.info('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(hook_name))
+                logger.info(u'A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(hook_name))
                 c = get_input()
                 if not(c.lower() == 'y' or c.lower() == 'yes'):
                     continue
@@ -166,7 +166,7 @@ class Init(Base):
 
             try:
                 os.mkdir(dst + '.d')
-            except FileExistsError:
+            except FileExistsException:
                 pass
 
         return 0
@@ -187,7 +187,7 @@ class Install(Base):
             filename = posixpath.basename(path)
 
             if not upgrade and os.path.exists(os.path.join(type_repo, filename)):
-                logger.info('"{}" is already installed, use "--upgrade" to upgrade the hook to the newest version.'.format(filename))
+                logger.info(u'"{}" is already installed, use "--upgrade" to upgrade the hook to the newest version.'.format(filename))
                 continue
 
             response = requests.get(hook)
@@ -206,14 +206,14 @@ class Install(Base):
 
             if os.path.exists(os.path.join(repo.repo_root(), 'git-hooks.cfg')):
                 parser.read(os.path.join(repo.repo_root(), 'git-hooks.cfg'))
-                self._config = {
-                    k: v.split('\n') for k, v in parser['install'].items()
-                }
+                self._config = dict(
+                    (k, v.split('\n')) for k, v in parser['install'].items()
+                )
             elif os.path.exists(os.path.join(repo.repo_root(), 'setup.cfg')):
                 parser.read(os.path.join(repo.repo_root(), 'setup.cfg'))
-                self._config = {
-                    k: v.split('\n') for k, v in parser['git-hooks.install'].items()
-                }
+                self._config = dict(
+                    (k, v.split('\n')) for k, v in parser['git-hooks.install'].items()
+                )
 
         return self._config
 

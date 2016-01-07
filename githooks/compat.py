@@ -8,4 +8,9 @@ try:
 except ImportError:
     from urlparse import urlsplit
 
-__all__ = [ConfigParser, urlsplit]
+try:
+    FileExistsException = FileExistsError
+except NameError:
+    FileExistsException = FileExists  # noqa
+
+__all__ = [ConfigParser, urlsplit, FileExistsError]
