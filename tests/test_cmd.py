@@ -174,7 +174,7 @@ class CmdInit(TestCase):
                             with open(os.path.join(utils.get_hook_script_dir(), name)) as new:
                                 self.assertEqual(new.read(), f.read())
 
-                        log_mock.info.assert_called_once_with('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
+                        log_mock.info.assert_called_once_with(u'A "{0}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
 
     def test_user_has_preexisitng_hooks_user_responds_no_to_all___no_are_overwritten(self):
         with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)):
@@ -193,7 +193,7 @@ class CmdInit(TestCase):
                         with open(os.path.join(self.hooks_dir, name)) as f:
                             self.assertEqual(name, f.read())
 
-                        log_mock.info.assert_called_once_with('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
+                        log_mock.info.assert_called_once_with(u'A "{0}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
 
     def test_user_has_preexisitng_hooks_with_overwrite_flag___all_are_overwritten(self):
         with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)):

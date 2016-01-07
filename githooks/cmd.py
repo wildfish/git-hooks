@@ -44,7 +44,7 @@ class Base(object):
         The name of the argument the name of the sub command will be stored in
         """
         if self.name:
-            return '{}__sub_command'.format(self.name)
+            return u'{0}__sub_command'.format(self.name)
         return 'sub_command'
 
     @property
