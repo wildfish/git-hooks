@@ -209,9 +209,9 @@ class CmdInit(TestCase):
 
                 self.assertGreater(len(self.hook_names), 0)
                 for name in self.hook_names:
-                    with open(os.path.join(self.hooks_dir, name)) as f, \
-                            open(os.path.join(utils.get_hook_script_dir(), name)) as new:
-                        self.assertEqual(new.read(), f.read())
+                    with open(os.path.join(self.hooks_dir, name)) as f:
+                        with open(os.path.join(utils.get_hook_script_dir(), name)) as new:
+                            self.assertEqual(new.read(), f.read())
 
                     log_mock.info.assert_not_called()
 
