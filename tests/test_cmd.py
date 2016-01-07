@@ -196,43 +196,43 @@ class CmdInit(TestCase):
                         log_mock.info.assert_called_once_with('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
 
     def test_user_has_preexisitng_hooks_with_overwrite_flag___all_are_overwritten(self):
-        with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)), \
-                patch('githooks.cmd.logger') as log_mock:
+        with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)):
+            with patch('githooks.cmd.logger') as log_mock:
 
-            sys.argv = ['foo', 'init', '-y']
+                sys.argv = ['foo', 'init', '-y']
 
-            for name in self.hook_names:
-                with open(os.path.join(self.hooks_dir, name), 'w') as f:
-                    f.write(name)
+                for name in self.hook_names:
+                    with open(os.path.join(self.hooks_dir, name), 'w') as f:
+                        f.write(name)
 
-            cmd.Hooks().run()
+                cmd.Hooks().run()
 
-            self.assertGreater(len(self.hook_names), 0)
-            for name in self.hook_names:
-                with open(os.path.join(self.hooks_dir, name)) as f, \
-                        open(os.path.join(utils.get_hook_script_dir(), name)) as new:
-                    self.assertEqual(new.read(), f.read())
+                self.assertGreater(len(self.hook_names), 0)
+                for name in self.hook_names:
+                    with open(os.path.join(self.hooks_dir, name)) as f, \
+                            open(os.path.join(utils.get_hook_script_dir(), name)) as new:
+                        self.assertEqual(new.read(), f.read())
 
-                log_mock.info.assert_not_called()
+                    log_mock.info.assert_not_called()
 
     def test_user_has_preexisitng_hooks_with_no_overwrite_flag___no_are_overwritten(self):
-        with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)), \
-                patch('githooks.cmd.logger') as log_mock:
+        with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)):
+            with patch('githooks.cmd.logger') as log_mock:
 
-            sys.argv = ['foo', 'init', '-n']
+                sys.argv = ['foo', 'init', '-n']
 
-            for name in self.hook_names:
-                with open(os.path.join(self.hooks_dir, name), 'w') as f:
-                    f.write(name)
+                for name in self.hook_names:
+                    with open(os.path.join(self.hooks_dir, name), 'w') as f:
+                        f.write(name)
 
-            cmd.Hooks().run()
+                cmd.Hooks().run()
 
-            self.assertGreater(len(self.hook_names), 0)
-            for name in self.hook_names:
-                with open(os.path.join(self.hooks_dir, name)) as f:
-                    self.assertEqual(name, f.read())
+                self.assertGreater(len(self.hook_names), 0)
+                for name in self.hook_names:
+                    with open(os.path.join(self.hooks_dir, name)) as f:
+                        self.assertEqual(name, f.read())
 
-                log_mock.info.assert_not_called()
+                    log_mock.info.assert_not_called()
 
     def test_one_of_the_hook_directories_already_exists___the_process_continues_as_normal(self):
         with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)):
