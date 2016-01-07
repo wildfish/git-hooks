@@ -120,9 +120,9 @@ class BaseRun(TestCase):
                 return other_action_mock(args)
 
         class Cmd(cmd.Base):
-            sub_commands = {
-                n: (SubCmd if n == selected else OtherSubCmd) for n in sub_parser_names
-            }
+            sub_commands = dict(
+                (n, (SubCmd if n == selected else OtherSubCmd)) for n in sub_parser_names
+            )
 
         sys.argv = ['foo', selected]
 
