@@ -158,45 +158,43 @@ class CmdInit(TestCase):
                 self.assertTrue(os.path.exists(os.path.join(self.hooks_dir, name + '.d')))
 
     def test_user_has_preexisitng_hooks_user_responds_yes_to_all___all_are_overwritten(self):
-        with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)), \
-                patch('githooks.cmd.get_input', Mock(return_value='yes')), \
-                patch('githooks.cmd.logger') as log_mock:
+        with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)):
+            with patch('githooks.cmd.get_input', Mock(return_value='yes')):
+                with patch('githooks.cmd.logger') as log_mock:
+                    sys.argv = ['foo', 'init']
 
-            sys.argv = ['foo', 'init']
+                    for name in self.hook_names:
+                        with open(os.path.join(self.hooks_dir, name), 'w') as f:
+                            f.write(name)
 
-            for name in self.hook_names:
-                with open(os.path.join(self.hooks_dir, name), 'w') as f:
-                    f.write(name)
+                    cmd.Hooks().run()
 
-            cmd.Hooks().run()
+                    self.assertGreater(len(self.hook_names), 0)
+                    for name in self.hook_names:
+                        with open(os.path.join(self.hooks_dir, name)) as f, \
+                                open(os.path.join(utils.get_hook_script_dir(), name)) as new:
+                            self.assertEqual(new.read(), f.read())
 
-            self.assertGreater(len(self.hook_names), 0)
-            for name in self.hook_names:
-                with open(os.path.join(self.hooks_dir, name)) as f, \
-                        open(os.path.join(utils.get_hook_script_dir(), name)) as new:
-                    self.assertEqual(new.read(), f.read())
-
-                log_mock.info.assert_called_once_with('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
+                        log_mock.info.assert_called_once_with('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
 
     def test_user_has_preexisitng_hooks_user_responds_no_to_all___no_are_overwritten(self):
-        with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)), \
-                patch('githooks.cmd.get_input', Mock(return_value='no')), \
-                patch('githooks.cmd.logger') as log_mock:
+        with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)):
+            with patch('githooks.cmd.get_input', Mock(return_value='no')):
+                with patch('githooks.cmd.logger') as log_mock:
+                    sys.argv = ['foo', 'init']
 
-            sys.argv = ['foo', 'init']
+                    for name in self.hook_names:
+                        with open(os.path.join(self.hooks_dir, name), 'w') as f:
+                            f.write(name)
 
-            for name in self.hook_names:
-                with open(os.path.join(self.hooks_dir, name), 'w') as f:
-                    f.write(name)
+                    cmd.Hooks().run()
 
-            cmd.Hooks().run()
+                    self.assertGreater(len(self.hook_names), 0)
+                    for name in self.hook_names:
+                        with open(os.path.join(self.hooks_dir, name)) as f:
+                            self.assertEqual(name, f.read())
 
-            self.assertGreater(len(self.hook_names), 0)
-            for name in self.hook_names:
-                with open(os.path.join(self.hooks_dir, name)) as f:
-                    self.assertEqual(name, f.read())
-
-                log_mock.info.assert_called_once_with('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
+                        log_mock.info.assert_called_once_with('A "{}" already exists for this repository. Do you want to continue? y/[N]'.format(name))
 
     def test_user_has_preexisitng_hooks_with_overwrite_flag___all_are_overwritten(self):
         with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)), \
