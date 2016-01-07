@@ -1,5 +1,6 @@
 # git-hooks
 [![Build Status](https://travis-ci.org/OmegaDroid/git-hooks.svg?branch=master)](https://travis-ci.org/OmegaDroid/git-hooks)
+[![codecov.io](https://codecov.io/github/OmegaDroid/git-hooks/coverage.svg?branch=master)](https://codecov.io/github/OmegaDroid/git-hooks?branch=master)
 
 A tool for organising your hooks
 
