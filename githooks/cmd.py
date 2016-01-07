@@ -16,7 +16,7 @@ from .compat import ConfigParser, urlsplit, FileExistsException
 logger = logging.getLogger(__name__)
 
 
-def get_input():
+def get_input():  # pragma: no cover (this is always mocked out)
     return input()
 
 
@@ -201,7 +201,7 @@ class Install(Base):
 
     @property
     def config(self):
-        if self._config is None:
+        if self._config is None:  # pragma: no cover (dont need to cover the caching behaviour)
             parser = ConfigParser()
 
             if os.path.exists(os.path.join(repo.repo_root(), 'git-hooks.cfg')):

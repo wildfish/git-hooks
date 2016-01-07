@@ -12,7 +12,7 @@ def get():
     :return: The git repo object (object details can be found here http://gitpython.readthedocs.org/en/stable/tutorial.html#meet-the-repo-type)
     """
     global _repo
-    if not _repo:
+    if not _repo:  # pragma: no cover (dont need to cover the caching behaviour)
         _repo = git.Repo(os.getcwd(), search_parent_directories=True)
     return _repo
 
@@ -74,5 +74,3 @@ def hook_type_directory(hook_type):
     :return: The path to install hooks to
     """
     return os.path.join(repo_root(), '.git', 'hooks', hook_type + '.d')
-
-
