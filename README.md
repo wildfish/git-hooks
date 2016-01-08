@@ -33,7 +33,7 @@ $> git hooks install <hook_type> <hook_url>
 where:
 
 ```
-hook_type: The type of hook to install the script as eg pre-commit,
+hook_type: The type of hook to install the script as eg pre-commit
 hook_url: The url of a sript to install
 ```
 
