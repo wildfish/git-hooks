@@ -33,8 +33,8 @@ $> git hooks install <hook_type> <hook_url>
 where:
 
 ```
-hook_type: The type of hook to install the script as eg pre-commit, post-commit etc
-hook_url: This can be the url of a sript to install or url to a git repository containing a file with the hook type name
+hook_type: The type of hook to install the script as eg pre-commit,
+hook_url: The url of a sript to install
 ```
 
 Alternatively you can define which hooks to install in a configuration file, for example, if you include the following
