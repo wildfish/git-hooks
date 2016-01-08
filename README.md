@@ -74,3 +74,40 @@ if files:
 ```
 
 This could also exclude file patterns based on an environment variable etc.
+
+# Contributing
+
+If you want to contribute:
+
+1. Fork the repo
+2. Make your changes
+3. Make sure all the commit hooks are passing
+4. Make sure coverage is at 100% (see below)
+5. Update the documentation if required (currently just this file)
+6. Make a pull request
+
+## Installing the project hooks
+
+To setup the hooks for this project run:
+
+```
+$> ./scripts/git-hooks init
+$> ./scripts/git-hooks install
+```
+
+## Code coverage
+
+We want to ensure 100% code coverage, this does not mean every line of code needs to be tested however. 
+
+What we hope to achieve by keeping the code coverage at 100% is an easy way to know if the code you have added is 
+covered by tests without needing to inspect all the line that aren't covered. There may be cases where you do not need
+to write a test that covers a specific branch of code, in this case the branch should be excluded using `# pragma: no cover`
+giving a reason for why it is excluded.
+
+Keep in mind this is not a way to avoid writing tests but a way to avoid wasting time trying to figure out if you have 
+covered all of your new code. If your reasons are lazy the PR will be rejected.
+
+## Hypothesis
+
+Lots of the tests in this project use [https://hypothesis.readthedocs.org/en/latest/](Hypothesis). This is not 
+required but is a very awesome tool so take a look at it.
