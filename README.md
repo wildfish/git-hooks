@@ -109,5 +109,5 @@ covered all of your new code. If your reasons are lazy the PR will be rejected.
 
 ## Hypothesis
 
-Lots of the tests in this project use [https://hypothesis.readthedocs.org/en/latest/](Hypothesis). This is not 
+Lots of the tests in this project use [Hypothesis](https://hypothesis.readthedocs.org/en/latest/). This is not 
 required but is a very awesome tool so take a look at it.
