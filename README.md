@@ -6,6 +6,14 @@
 
 A tool for organising your hooks
 
+# Installing
+
+To install git-hooks run:
+
+```
+$> pip install git+https://github.com/OmegaDroid/git-hooks
+```
+
 # Usage
 
 ## Initialisation
