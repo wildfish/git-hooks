@@ -11,7 +11,7 @@ A tool for organising your hooks
 To install git-hooks run:
 
 ```
-$> pip install git+https://github.com/OmegaDroid/git-hooks
+$> pip install git+https://github.com/wildfish/git-hooks
 ```
 
 # Usage
