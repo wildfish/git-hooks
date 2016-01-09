@@ -1,0 +1,2 @@
+[run]
+omit = githooks/compat.py
