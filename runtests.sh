@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-nosetests --with-coverage --cover-tests --cover-branches --cover-package githooks
+py.test --cov=githooks

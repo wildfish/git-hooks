@@ -1,0 +1,10 @@
+gitpython
+mock
+hypothesis
+coverage
+responses
+flake8
+unittest2
+pytest
+pytest-cov
+pip-tools
