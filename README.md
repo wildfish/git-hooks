@@ -34,7 +34,7 @@ where:
 
 ```
 hook_type: The type of hook to install the script as eg pre-commit
-hook_url: The url of a sript to install
+hook_url: The url of a script to install
 ```
 
 Alternatively you can define which hooks to install in a configuration file, for example, if you include the following
