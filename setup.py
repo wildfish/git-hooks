@@ -19,6 +19,8 @@ setup(
         os.path.join('scripts', 'git-hooks')
     ],
     install_requires = [
-        'gitpython'
+        'gitpython',
+        'requests',
+        'six',
     ],
 )
