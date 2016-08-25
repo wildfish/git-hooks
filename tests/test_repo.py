@@ -67,7 +67,7 @@ class RepoModifiedFiles(TestCase):
     )
     def test_result_is_the_absolute_paths_to_all_changed_but_not_new_or_deleted_files(self, mod, new, deleted):
         mod_diffs = [FakeDiffObject(f, f, False, False) for f in mod]
-        new_diffs = [FakeDiffObject(f, None, True, False) for f in new]
+        new_diffs = [FakeDiffObject(None, f, True, False) for f in new]
         deleted_diffs = [FakeDiffObject(None, f, False, True) for f in deleted]
 
         with patch('githooks.repo.get') as get_mock:
@@ -93,7 +93,7 @@ class RepoAddedFiles(TestCase):
     )
     def test_result_is_the_absolute_paths_to_all_new_but_not_modified_or_deleted_files(self, mod, new, deleted):
         mod_diffs = [FakeDiffObject(f, f, False, False) for f in mod]
-        new_diffs = [FakeDiffObject(f, None, True, False) for f in new]
+        new_diffs = [FakeDiffObject(None, f, True, False) for f in new]
         deleted_diffs = [FakeDiffObject(None, f, False, True) for f in deleted]
 
         with patch('githooks.repo.get') as get_mock:
@@ -119,7 +119,7 @@ class RepoDeletedFiles(TestCase):
     )
     def test_result_is_the_absolute_paths_to_all_deleted_but_not_new_or_modified_files(self, mod, new, deleted):
         mod_diffs = [FakeDiffObject(f, f, False, False) for f in mod]
-        new_diffs = [FakeDiffObject(f, None, True, False) for f in new]
+        new_diffs = [FakeDiffObject(None, f, True, False) for f in new]
         deleted_diffs = [FakeDiffObject(None, f, False, True) for f in deleted]
 
         with patch('githooks.repo.get') as get_mock:
