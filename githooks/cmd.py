@@ -10,7 +10,7 @@ import os
 import shutil
 
 from . import utils, repo
-from .compat import ConfigParser, urlsplit, FileExistsException
+from .compat import ConfigParser, urlsplit, urljoin, FileExistsException
 
 
 logger = logging.getLogger(__name__)
@@ -222,7 +222,7 @@ class Install(Base):
         return self._config
 
     def add_args(self, parser):
-        parser.add_argument('hook_type', nargs='?', help='The hook type to install. If no hook type is given the config from "githooks.cfg" or "setup.cfg" is used', default=None, choices=utils.get_hook_names())
+        parser.add_argument('hook_type', nargs='?', help='The hook type to install. If no hook is given the config from "githooks.cfg" or "setup.cfg" is used', default=None, choices=utils.get_hook_names())
         parser.add_argument('hooks', nargs='*', help='The urls for hooks to install')
         parser.add_argument('-u', '--upgrade', help='Flag if hooks should be upgraded with the remote version', action='store_true', dest='upgrade')
 
@@ -234,9 +234,42 @@ class Install(Base):
                 self._install_hooks(hook_type, hooks, args.upgrade)
 
 
+class Search(Base):
+    description = 'Search a repository for hooks'
+
+    def add_args(self, parser):
+        parser.add_argument('query', help='The search query')
+        parser.add_argument('-t', '--hook-types', nargs='*', help='The hook types to search for.', default=utils.get_hook_names(), choices=utils.get_hook_names(), dest='hook_types')
+        parser.add_argument('-r', '--api-root', help='The url of the repo to use', default='http://www.git-hooks.com/api/v1/', dest='api_root')
+        parser.add_argument('-n', '--max-results', help='The maximum number of results to retrieve', default=20, dest='max_results', type=int)
+
+    def fetch(self, args):
+        url = urljoin(args.api_root, 'hooks/')
+
+        return requests.get(url, params={
+            'q': args.query,
+            'page_size': args.max_results,
+            'hook_type__in': args.hook_types,
+        }).json()['results']
+
+    def action(self, args):
+        results = self.fetch(args)
+
+        for t in args.hook_types:
+            logger.info('')
+            logger.info(t)
+            logger.info('=' * len(t))
+            logger.info('')
+
+            for h in (_h for _h in results if _h['content']['hook_type'] == t):
+                logger.info(h['name'])
+                logger.info('  ' + h['content']['description'])
+
+
 class Hooks(Base):
     description = 'Manages your commit hooks for you!'
     sub_commands = {
         'init': Init,
-        'install': Install
+        'install': Install,
+        'search': Search,
     }

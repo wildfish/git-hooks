@@ -4,13 +4,13 @@ except ImportError:
     from ConfigParser import ConfigParser
 
 try:
-    from urllib.parse import urlsplit
+    from urllib.parse import urlsplit, urljoin
 except ImportError:
-    from urlparse import urlsplit
+    from urlparse import urlsplit, urljoin
 
 try:
     FileExistsException = FileExistsError
 except NameError:
     FileExistsException = OSError
 
-__all__ = [ConfigParser, urlsplit, FileExistsException]
+__all__ = [ConfigParser, urlsplit, urljoin, FileExistsException]

@@ -1,2 +1,7 @@
 [run]
 omit = githooks/compat.py
+branch = True
+
+[report]
+fail_under = 100
+show_missing = True

@@ -14,6 +14,7 @@ from hypothesis.strategies import text, dictionaries, lists, integers, sampled_f
 
 from githooks import cmd, utils, repo
 from githooks.compat import ConfigParser
+from .strategies import api_results
 
 
 class BaseSubParserDestName(TestCase):
@@ -537,3 +538,89 @@ class CmdInstall(TestCase):
                             self.assertTrue(os.path.exists(os.path.join(repo.hook_type_directory(hook_type), hook['filename'])))
         finally:
             shutil.rmtree(repo_dir)
+
+
+class CmdSearch(TestCase):
+    @given(api_results())
+    def test_request_is_successful___results_are_printed(self, res):
+        with patch('githooks.cmd.requests.get') as mock_get:
+            with patch('githooks.cmd.logger.info') as mock_logger:
+                mock_response = Mock()
+                mock_response.json = Mock(return_value=res)
+
+                mock_get.return_value = mock_response
+
+                sys.argv = ['foo', 'search', 'query']
+                cmd.Hooks().run()
+
+                call_iter = iter(mock_logger.call_args_list)
+                for t in utils.get_hook_names():
+                    self.assertEqual('', next(call_iter)[0][0])
+                    self.assertEqual(t, next(call_iter)[0][0])
+                    self.assertEqual('=' * len(t), next(call_iter)[0][0])
+                    self.assertEqual('', next(call_iter)[0][0])
+
+                    for h in (_h for _h in res['results'] if _h['content']['hook_type'] == t):
+                        self.assertEqual(h['name'], next(call_iter)[0][0])
+                        self.assertEqual('  ' + h['content']['description'], next(call_iter)[0][0])
+
+    @given(text(max_size=10, min_size=1))
+    def test_only_query_is_supplied___api_is_called_with_default_filters(self, query):
+        with patch('githooks.cmd.requests.get') as mock_get:
+            sys.argv = ['foo', 'search', query]
+            cmd.Hooks().run()
+
+            mock_get.assert_called_with(
+                'http://www.git-hooks.com/api/v1/hooks/',
+                params={
+                    'q': query,
+                    'page_size': 20,
+                    'hook_type__in': utils.get_hook_names(),
+                }
+            )
+
+    @given(text(max_size=10, min_size=1), sampled_from(['-r', '--api-root']), text(max_size=10, min_size=2, alphabet=string.ascii_letters))
+    def test_api_root_is_supplied___api_is_called_with_default_filters_and_correct_root(self, query, option, api_root):
+        with patch('githooks.cmd.requests.get') as mock_get:
+            api_root = 'http://www.{}.com'.format(api_root)
+            sys.argv = ['foo', 'search', query, option, api_root]
+            cmd.Hooks().run()
+
+            mock_get.assert_called_with(
+                '{}/hooks/'.format(api_root),
+                params={
+                    'q': query,
+                    'page_size': 20,
+                    'hook_type__in': utils.get_hook_names(),
+                }
+            )
+
+    @given(text(max_size=10, min_size=1), sampled_from(['-t', '--hook-types']), lists(sampled_from(utils.get_hook_names()), min_size=1, unique=True))
+    def test_hook_types_are_supplied___api_is_called_filtered_by_the_api_root(self, query, option, types):
+        with patch('githooks.cmd.requests.get') as mock_get:
+            sys.argv = ['foo', 'search', query, option] + types
+            cmd.Hooks().run()
+
+            mock_get.assert_called_with(
+                'http://www.git-hooks.com/api/v1/hooks/',
+                params={
+                    'q': query,
+                    'page_size': 20,
+                    'hook_type__in': types,
+                }
+            )
+
+    @given(text(max_size=10, min_size=1), sampled_from(['-n', '--max-results']), integers(min_value=0))
+    def test_num_results_are_supplied___api_is_called_with_correct_page_size(self, query, option, num):
+        with patch('githooks.cmd.requests.get') as mock_get:
+            sys.argv = ['foo', 'search', query, option, str(num)]
+            cmd.Hooks().run()
+
+            mock_get.assert_called_with(
+                'http://www.git-hooks.com/api/v1/hooks/',
+                params={
+                    'q': query,
+                    'page_size': num,
+                    'hook_type__in': utils.get_hook_names(),
+                }
+            )
