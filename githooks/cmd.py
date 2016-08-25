@@ -140,6 +140,10 @@ class Init(Base):
         parser.add_argument('-n', '--no-overwrite', help='Silently avoid overwriting existing hooks', action='store_true', dest='no_overwrite')
 
     def action(self, args):
+        if not repo.get().heads:
+            logger.error('The hook runner doesnt currently work for new repos. Perform an initial commit before initialising githooks (see: https://github.com/wildfish/git-hooks/issues/4)')
+            return 1
+
         if args.overwrite and args.no_overwrite:
             logger.error('Both the overwrite and no overwrite flags were set')
             return 1

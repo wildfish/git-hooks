@@ -1,8 +1,6 @@
 import git
 import os
 
-_repo = None
-
 
 def get():
     """
@@ -11,10 +9,7 @@ def get():
 
     :return: The git repo object (object details can be found here http://gitpython.readthedocs.org/en/stable/tutorial.html#meet-the-repo-type)
     """
-    global _repo
-    if not _repo:  # pragma: no cover (dont need to cover the caching behaviour)
-        _repo = git.Repo(os.getcwd(), search_parent_directories=True)
-    return _repo
+    return git.Repo(os.getcwd(), search_parent_directories=True)
 
 
 def repo_root():

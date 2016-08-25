@@ -246,7 +246,7 @@ class CmdInit(TestCase):
                 self.assertTrue(os.path.exists(os.path.join(self.hooks_dir, name)))
                 self.assertTrue(os.path.exists(os.path.join(self.hooks_dir, name + '.d')))
 
-    def test_both_the_overwrite_and_no_overrwrtie_flags_are_set___the_user_is_given_an_error_and_the_process_exits(self):
+    def test_both_the_overwrite_and_no_overwrite_flags_are_set___the_user_is_given_an_error_and_the_process_exits(self):
         with patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)):
             with patch('githooks.cmd.logger') as log_mock:
                 sys.argv = ['foo', 'init', '-y', '-n']
@@ -259,6 +259,16 @@ class CmdInit(TestCase):
                     self.assertFalse(os.path.exists(os.path.join(self.hooks_dir, name + '.d')))
 
                 log_mock.error.assert_called_once_with('Both the overwrite and no overwrite flags were set')
+
+    def test_repo_is_new___user_is_given_an_error(self):
+        with patch('githooks.cmd.repo.get', Mock()) as get_mock:
+            with patch('githooks.cmd.logger') as log_mock:
+                repo_mock = Mock()
+                repo_mock.heads = []
+                get_mock.return_value = repo_mock
+
+                self.assertEqual(1, cmd.Hooks().run())
+                log_mock.error.assert_called_once_with('The hook runner doesnt currently work for new repos. Perform an initial commit before initialising githooks (see: https://github.com/wildfish/git-hooks/issues/4)')
 
 
 class CmdInstall(TestCase):
