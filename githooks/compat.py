@@ -6,7 +6,8 @@ except ImportError:
 try:
     from urllib.parse import urlsplit, urljoin, urlencode
 except ImportError:
-    from urlparse import urlsplit, urljoin, urlencode
+    from urlparse import urlsplit, urljoin
+    from urllib import urlencode
 
 try:
     FileExistsException = FileExistsError
