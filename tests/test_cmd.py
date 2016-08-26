@@ -600,7 +600,7 @@ class CmdSearch(TestCase):
                         self.assertEqual(h['name'], next(call_iter)[0][0])
                         self.assertEqual('  ' + h['content']['description'], next(call_iter)[0][0])
 
-    @given(text(max_size=10, min_size=1))
+    @given(text(max_size=10, min_size=1, alphabet=string.ascii_letters))
     def test_only_query_is_supplied___api_is_called_with_default_filters(self, query):
         with patch('githooks.cmd.requests.get') as mock_get:
             sys.argv = ['foo', 'search', query]
@@ -615,7 +615,7 @@ class CmdSearch(TestCase):
                 }
             )
 
-    @given(text(max_size=10, min_size=1), sampled_from(['-r', '--api-root']), text(max_size=10, min_size=2, alphabet=string.ascii_letters))
+    @given(text(max_size=10, min_size=1, alphabet=string.ascii_letters), sampled_from(['-r', '--api-root']), text(max_size=10, min_size=2, alphabet=string.ascii_letters))
     def test_api_root_is_supplied___api_is_called_with_default_filters_and_correct_root(self, query, option, api_root):
         with patch('githooks.cmd.requests.get') as mock_get:
             api_root = 'http://www.{}.com'.format(api_root)
@@ -631,7 +631,7 @@ class CmdSearch(TestCase):
                 }
             )
 
-    @given(text(max_size=10, min_size=1), sampled_from(['-t', '--hook-types']), lists(sampled_from(utils.get_hook_names()), min_size=1, unique=True))
+    @given(text(max_size=10, min_size=1, alphabet=string.ascii_letters), sampled_from(['-t', '--hook-types']), lists(sampled_from(utils.get_hook_names()), min_size=1, unique=True))
     def test_hook_types_are_supplied___api_is_called_filtered_by_the_api_root(self, query, option, types):
         with patch('githooks.cmd.requests.get') as mock_get:
             sys.argv = ['foo', 'search', query, option] + types
@@ -646,7 +646,7 @@ class CmdSearch(TestCase):
                 }
             )
 
-    @given(text(max_size=10, min_size=1), sampled_from(['-n', '--max-results']), integers(min_value=0))
+    @given(text(max_size=10, min_size=1, alphabet=string.ascii_letters), sampled_from(['-n', '--max-results']), integers(min_value=0))
     def test_num_results_are_supplied___api_is_called_with_correct_page_size(self, query, option, num):
         with patch('githooks.cmd.requests.get') as mock_get:
             sys.argv = ['foo', 'search', query, option, str(num)]
