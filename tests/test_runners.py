@@ -1,4 +1,6 @@
 from random import randint
+
+from hypothesis import example
 from unittest2 import TestCase
 
 from hypothesis import given
@@ -41,6 +43,7 @@ class HookRunnerRun(TestCase):
         dictionaries(text(min_size=1, max_size=10), text(min_size=0, max_size=10), max_size=10),
         lists(text(min_size=1, max_size=10), min_size=1, max_size=10),
     )
+    @example([], {}, ['foo'])
     def test_hook_runner_is_ran___subprocess_is_called_for_each_hook_with_the_correct_args(self, process_args, process_kwargs, found_hooks):
         with patch('githooks.runners.subprocess') as subprocess_mock:
             expected_args = list(process_args)
