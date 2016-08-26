@@ -13,4 +13,4 @@ try:
 except NameError:
     FileExistsException = OSError
 
-__all__ = [ConfigParser, urlsplit, urljoin, FileExistsException]
+__all__ = [ConfigParser, urlsplit, urljoin, urlencode, FileExistsException]

@@ -1,5 +1,4 @@
 import hashlib
-import json
 import string
 
 import sys
@@ -17,7 +16,6 @@ from hypothesis import given, assume
 from hypothesis.strategies import text, dictionaries, lists, integers, sampled_from, fixed_dictionaries
 
 from githooks import cmd, utils, repo
-from githooks import compat
 from githooks.compat import ConfigParser
 from .strategies import api_results
 
