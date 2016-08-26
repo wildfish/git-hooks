@@ -1,3 +1,5 @@
+import hashlib
+import json
 import string
 
 import sys
@@ -7,12 +9,15 @@ import shutil
 import tempfile
 from mock import Mock, patch
 from random import choice
+
+from tests.utils import FakeRepoDir
 from unittest2 import TestCase
 
 from hypothesis import given, assume
 from hypothesis.strategies import text, dictionaries, lists, integers, sampled_from, fixed_dictionaries
 
 from githooks import cmd, utils, repo
+from githooks import compat
 from githooks.compat import ConfigParser
 from .strategies import api_results
 
@@ -276,11 +281,50 @@ class CmdInstall(TestCase):
     def setUp(self):
         self.hook_names = utils.get_hook_names()
 
-    def make_repo_dir(self):
-        repo_dir = tempfile.mkdtemp()
-        hooks_dir = os.path.join(repo_dir, '.git', 'hooks')
-        os.makedirs(hooks_dir)
-        return repo_dir
+    def set_missing_search_response(self):
+        responses.reset()
+
+        responses.add(
+            responses.GET,
+            'http://www.git-hooks.com/api/v1/hooks/',
+            json={
+                'count': 0,
+                'next': None,
+                'prev': None,
+                'results': []
+            },
+            status=200
+        )
+
+    def set_existing_search_response(self, name, content, hook_type, response_content=None, dld_url='http://www.someurl.com/'):
+        responses.reset()
+
+        responses.add(
+            responses.GET,
+            'http://www.git-hooks.com/api/v1/hooks/',
+            json={
+                'count': 1,
+                'next': None,
+                'prev': None,
+                'results': [{
+                    'name': name,
+                    'current_version': 1,
+                    'content': {
+                        'checksum': hashlib.sha256(content.encode()).hexdigest(),
+                        'hook_type': hook_type,
+                        'download_url': dld_url
+                    }
+                }]
+            },
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            dld_url,
+            body=response_content or content,
+            status=200,
+        )
 
     @given(
         text(min_size=1, alphabet=string.ascii_letters),
@@ -290,31 +334,24 @@ class CmdInstall(TestCase):
     )
     @responses.activate
     def test_hook_is_not_yet_installed___hook_is_installed(self, content, url_front, file_name, hook_name):
-        repo_dir = self.make_repo_dir()
+        self.set_missing_search_response()
 
-        try:
-            url = 'http://' + url_front + '/' + file_name
+        url = 'http://' + url_front + '/' + file_name
 
-            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)):
-                with patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
-                    sys.argv = ['foo', 'init', '-y']
-                    cmd.Hooks().run()
+        with FakeRepoDir():
+            responses.add(
+                responses.GET,
+                url,
+                body=content,
+                status=200,
+            )
 
-                    responses.add(
-                        responses.GET,
-                        url,
-                        body=content,
-                        status=200,
-                    )
+            sys.argv = ['foo', 'install', hook_name, url]
 
-                    sys.argv = ['foo', 'install', hook_name, url]
+            cmd.Hooks().run()
 
-                    cmd.Hooks().run()
-
-                    with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
-                        self.assertEqual(content, f.read())
-        finally:
-            shutil.rmtree(repo_dir)
+            with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
+                self.assertEqual(content, f.read())
 
     @given(
         text(min_size=1, alphabet=string.ascii_letters),
@@ -326,35 +363,27 @@ class CmdInstall(TestCase):
     @responses.activate
     def test_hook_is_yet_installed_upgrade_is_not_set___hook_is_not_installed(self, orig_content, new_content, url_front, file_name, hook_name):
         assume(new_content != orig_content)
+        self.set_missing_search_response()
 
-        repo_dir = self.make_repo_dir()
+        url = 'http://' + url_front + '/' + file_name
 
-        try:
-            url = 'http://' + url_front + '/' + file_name
+        with FakeRepoDir():
+            with open(os.path.join(repo.hook_type_directory(hook_name), file_name), 'w') as f:
+                f.write(orig_content)
 
-            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)):
-                with patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
-                    sys.argv = ['foo', 'init', '-y']
-                    cmd.Hooks().run()
+            responses.add(
+                responses.GET,
+                url,
+                body=new_content,
+                status=200,
+            )
 
-                    with open(os.path.join(repo.hook_type_directory(hook_name), file_name), 'w') as f:
-                        f.write(orig_content)
+            sys.argv = ['foo', 'install', hook_name, url]
 
-                    responses.add(
-                        responses.GET,
-                        url,
-                        body=new_content,
-                        status=200,
-                    )
+            cmd.Hooks().run()
 
-                    sys.argv = ['foo', 'install', hook_name, url]
-
-                    cmd.Hooks().run()
-
-                    with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
-                        self.assertEqual(orig_content, f.read())
-        finally:
-            shutil.rmtree(repo_dir)
+            with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
+                self.assertEqual(orig_content, f.read())
 
     @given(
         text(min_size=1, alphabet=string.ascii_letters),
@@ -366,35 +395,27 @@ class CmdInstall(TestCase):
     @responses.activate
     def test_hook_is_yet_installed_upgrade_is_set___hook_is_installed(self, orig_content, new_content, url_front, file_name, hook_name):
         assume(new_content != orig_content)
+        self.set_missing_search_response()
 
-        repo_dir = self.make_repo_dir()
+        url = 'http://' + url_front + '/' + file_name
 
-        try:
-            url = 'http://' + url_front + '/' + file_name
+        with FakeRepoDir():
+            with open(os.path.join(repo.hook_type_directory(hook_name), file_name), 'w') as f:
+                f.write(orig_content)
 
-            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)):
-                with patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
-                    sys.argv = ['foo', 'init', '-y']
-                    cmd.Hooks().run()
+            responses.add(
+                responses.GET,
+                url,
+                body=new_content,
+                status=200,
+            )
 
-                    with open(os.path.join(repo.hook_type_directory(hook_name), file_name), 'w') as f:
-                        f.write(orig_content)
+            sys.argv = ['foo', 'install', hook_name, url, '--upgrade']
 
-                    responses.add(
-                        responses.GET,
-                        url,
-                        body=new_content,
-                        status=200,
-                    )
+            cmd.Hooks().run()
 
-                    sys.argv = ['foo', 'install', hook_name, url, '--upgrade']
-
-                    cmd.Hooks().run()
-
-                    with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
-                        self.assertEqual(new_content, f.read())
-        finally:
-            shutil.rmtree(repo_dir)
+            with open(os.path.join(repo.hook_type_directory(hook_name), file_name)) as f:
+                self.assertEqual(new_content, f.read())
 
     @given(
         dictionaries(
@@ -420,69 +441,62 @@ class CmdInstall(TestCase):
     )
     @responses.activate
     def test_config_is_given___all_hooks_from_config_are_installed(self, hook_configs, setup_configs):
-        repo_dir = self.make_repo_dir()
+        self.set_missing_search_response()
 
-        config = ConfigParser()
-        hook_type_setting = {}
-        for hook_type, hooks in hook_configs.items():
-            hook_type_setting.setdefault(hook_type, '')
+        with FakeRepoDir() as dir:
+            config = ConfigParser()
+            hook_type_setting = {}
+            for hook_type, hooks in hook_configs.items():
+                hook_type_setting.setdefault(hook_type, '')
 
-            for hook in hooks:
-                url = 'http://' + hook['front'] + '/' + hook['filename']
-                hook_type_setting[hook_type] += url + '\n'
+                for hook in hooks:
+                    url = 'http://' + hook['front'] + '/' + hook['filename']
+                    hook_type_setting[hook_type] += url + '\n'
 
-                responses.add(
-                    responses.GET,
-                    url,
-                    body=hook['content'],
-                    status=200,
-                )
+                    responses.add(
+                        responses.GET,
+                        url,
+                        body=hook['content'],
+                        status=200,
+                    )
 
-        config.add_section('install')
-        for hook_type, value in hook_type_setting.items():
-            config.set('install', hook_type, value)
+            config.add_section('install')
+            for hook_type, value in hook_type_setting.items():
+                config.set('install', hook_type, value)
 
-        with open(os.path.join(repo_dir, 'git-hooks.cfg'), 'w') as f:
-            config.write(f)
+            with open(os.path.join(str(dir), 'git-hooks.cfg'), 'w') as f:
+                config.write(f)
 
-        setup_config = ConfigParser()
-        hook_type_setting = {}
-        for hook_type, hooks in setup_configs.items():
-            hook_type_setting.setdefault(hook_type, '')
+            setup_config = ConfigParser()
+            hook_type_setting = {}
+            for hook_type, hooks in setup_configs.items():
+                hook_type_setting.setdefault(hook_type, '')
 
-            for hook in hooks:
-                url = 'http://' + hook['front'] + '/' + hook['filename']
-                hook_type_setting[hook_type] += url + '\n'
+                for hook in hooks:
+                    url = 'http://' + hook['front'] + '/' + hook['filename']
+                    hook_type_setting[hook_type] += url + '\n'
 
-                responses.add(
-                    responses.GET,
-                    url,
-                    body=hook['content'],
-                    status=200,
-                )
+                    responses.add(
+                        responses.GET,
+                        url,
+                        body=hook['content'],
+                        status=200,
+                    )
 
-        setup_config.add_section('git-hooks.install')
-        for hook_type, value in hook_type_setting.items():
-            setup_config.set('git-hooks.install', hook_type, value)
+            setup_config.add_section('git-hooks.install')
+            for hook_type, value in hook_type_setting.items():
+                setup_config.set('git-hooks.install', hook_type, value)
 
-        with open(os.path.join(repo_dir, 'setup.cfg'), 'w') as f:
-            setup_config.write(f)
+            with open(os.path.join(str(dir), 'setup.cfg'), 'w') as f:
+                setup_config.write(f)
 
-        try:
-            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)):
-                with patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
-                    sys.argv = ['foo', 'init', '-y']
-                    cmd.Hooks().run()
+            sys.argv = ['foo', 'install']
 
-                    sys.argv = ['foo', 'install']
+            cmd.Hooks().run()
 
-                    cmd.Hooks().run()
-
-                    for hook_type, hooks in hook_configs.items():
-                        for hook in hooks:
-                            self.assertTrue(os.path.exists(os.path.join(repo.hook_type_directory(hook_type), hook['filename'])))
-        finally:
-            shutil.rmtree(repo_dir)
+            for hook_type, hooks in hook_configs.items():
+                for hook in hooks:
+                    self.assertTrue(os.path.exists(os.path.join(repo.hook_type_directory(hook_type), hook['filename'])))
 
     @given(
         dictionaries(
@@ -498,7 +512,7 @@ class CmdInstall(TestCase):
     )
     @responses.activate
     def test_setup_config_is_given___all_hooks_from_setup_config_are_installed(self, setup_configs):
-        repo_dir = self.make_repo_dir()
+        self.set_missing_search_response()
 
         setup_config = ConfigParser()
         hook_type_setting = {}
@@ -520,24 +534,48 @@ class CmdInstall(TestCase):
         for hook_type, value in hook_type_setting.items():
             setup_config.set('git-hooks.install', hook_type, value)
 
-        with open(os.path.join(repo_dir, 'setup.cfg'), 'w') as f:
-            setup_config.write(f)
+        with FakeRepoDir() as dir:
+            with open(os.path.join(str(dir), 'setup.cfg'), 'w') as f:
+                setup_config.write(f)
 
-        try:
-            with patch('githooks.cmd.repo.repo_root', Mock(return_value=repo_dir)):
-                with patch('githooks.repo.repo_root', Mock(return_value=repo_dir)):
-                    sys.argv = ['foo', 'init', '-y']
-                    cmd.Hooks().run()
+            sys.argv = ['foo', 'install']
 
-                    sys.argv = ['foo', 'install']
+            cmd.Hooks().run()
 
-                    cmd.Hooks().run()
+            for hook_type, hooks in setup_configs.items():
+                for hook in hooks:
+                    self.assertTrue(os.path.exists(os.path.join(repo.hook_type_directory(hook_type), hook['filename'])))
 
-                    for hook_type, hooks in setup_configs.items():
-                        for hook in hooks:
-                            self.assertTrue(os.path.exists(os.path.join(repo.hook_type_directory(hook_type), hook['filename'])))
-        finally:
-            shutil.rmtree(repo_dir)
+    @given(
+        text(min_size=1, max_size=10, alphabet=string.ascii_letters),
+        text(min_size=1, alphabet=string.ascii_letters),
+        sampled_from(utils.get_hook_names()),
+    )
+    def test_hook_is_found_and_checksum_passes___hook_is_saved(self, name, content, hook_type):
+        self.set_existing_search_response(name, content, hook_type)
+        responses.start()
+
+        with FakeRepoDir():
+            sys.argv = ['foo', 'install', hook_type, name]
+            cmd.Hooks().run()
+
+            with open(os.path.join(repo.hook_type_directory(hook_type), name)) as f:
+                self.assertEqual(content, f.read())
+
+    @given(
+        text(min_size=1, max_size=10, alphabet=string.ascii_letters),
+        text(min_size=1, alphabet=string.ascii_letters),
+        sampled_from(utils.get_hook_names()),
+    )
+    def test_hook_is_found_and_checksum_fails___hook_is_not_saved(self, name, content, hook_type):
+        self.set_existing_search_response(name, content, hook_type, response_content=content + 'tamper')
+        responses.start()
+
+        with FakeRepoDir():
+            sys.argv = ['foo', 'install', hook_type, name]
+            cmd.Hooks().run()
+
+            self.assertFalse(os.path.exists(os.path.join(repo.hook_type_directory(hook_type), name)))
 
 
 class CmdSearch(TestCase):

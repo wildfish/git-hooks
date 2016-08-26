@@ -4,9 +4,9 @@ except ImportError:
     from ConfigParser import ConfigParser
 
 try:
-    from urllib.parse import urlsplit, urljoin
+    from urllib.parse import urlsplit, urljoin, urlencode
 except ImportError:
-    from urlparse import urlsplit, urljoin
+    from urlparse import urlsplit, urljoin, urlencode
 
 try:
     FileExistsException = FileExistsError

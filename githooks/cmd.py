@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import hashlib
 import logging
 import stat
 from argparse import ArgumentParser
@@ -183,20 +184,72 @@ class Install(Base):
         self._config = None
         super(Install, self).__init__(*args, **kwargs)
 
-    def _install_hooks(self, hook_name, hooks, upgrade):
+    def add_args(self, parser):
+        parser.add_argument('hook_type', nargs='?', help='The hook type to install. If no hook is given the config from "githooks.cfg" or "setup.cfg" is used', default=None, choices=utils.get_hook_names())
+        parser.add_argument('hooks', nargs='*', help='The urls for hooks to install')
+        parser.add_argument('-u', '--upgrade', help='Flag if hooks should be upgraded with the remote version', action='store_true', dest='upgrade')
+        parser.add_argument('-r', '--api-root', help='The url of the repo to use', default='http://www.git-hooks.com/api/v1/', dest='api_root')
+
+    def action(self, args):
+        if args.hook_type:
+            self._install_hooks(args.hook_type, args.hooks, args.upgrade, args.api_root)
+        else:
+            for hook_type, hooks in self.config.items():
+                self._install_hooks(hook_type, hooks, args.upgrade, args.api_root)
+
+    def _name_from_uri(self, uri):
+        path = urlsplit(uri).path
+        return posixpath.basename(path)
+
+    def _uri_and_checksum_from_name(self, name, hook_type, api_root):
+        response = requests.get(
+            urljoin(api_root, 'hooks/'),
+            params={
+                'name': name,
+                'page_size': 1,
+                'hook_type': hook_type
+            }
+        )
+
+        res = response.json()
+        if res['count'] > 0:
+            content = res['results'][0]['content']
+            return content['download_url'], content['checksum']
+        return '', None
+
+    def _check_checksum(self, content, checksum):
+        # if the hook is installed from uri rather than the api there will be no checksum
+        if not checksum:
+            return True
+
+        return checksum == hashlib.sha256(content).hexdigest()
+
+    def _install_hooks(self, hook_name, hooks, upgrade, api_root):
         type_repo = repo.hook_type_directory(hook_name)
 
         for hook in hooks:
-            path = urlsplit(hook).path
-            filename = posixpath.basename(path)
+            # figure out if we are installing a hook by name or uri
+            uri, checksum = self._uri_and_checksum_from_name(hook, hook_name, api_root)
+            if uri:
+                name = hook
+            else:
+                name = self._name_from_uri(hook)
+                uri = hook
 
-            if not upgrade and os.path.exists(os.path.join(type_repo, filename)):
-                logger.info(u'"{0}" is already installed, use "--upgrade" to upgrade the hook to the newest version.'.format(filename))
+            # check if we need to skip based on the hook alread existing
+            if not upgrade and os.path.exists(os.path.join(type_repo, name)):
+                logger.info(u'"{0}" is already installed, use "--upgrade" to upgrade the hook to the newest version.'.format(name))
                 continue
 
-            response = requests.get(hook)
+            response = requests.get(uri)
 
-            dst = os.path.join(type_repo, filename)
+            # make sure the content hasn't been tampered with
+            if not self._check_checksum(response.content, checksum):
+                logger.info(u'"Checksum didn\'t match for "{0}". SKIPPING.'.format(name))
+                continue
+
+            # save the hook
+            dst = os.path.join(type_repo, name)
             with open(dst, 'wb') as f:
                 f.write(response.content)
 
@@ -220,18 +273,6 @@ class Install(Base):
                 )
 
         return self._config
-
-    def add_args(self, parser):
-        parser.add_argument('hook_type', nargs='?', help='The hook type to install. If no hook is given the config from "githooks.cfg" or "setup.cfg" is used', default=None, choices=utils.get_hook_names())
-        parser.add_argument('hooks', nargs='*', help='The urls for hooks to install')
-        parser.add_argument('-u', '--upgrade', help='Flag if hooks should be upgraded with the remote version', action='store_true', dest='upgrade')
-
-    def action(self, args):
-        if args.hook_type:
-            self._install_hooks(args.hook_type, args.hooks, args.upgrade)
-        else:
-            for hook_type, hooks in self.config.items():
-                self._install_hooks(hook_type, hooks, args.upgrade)
 
 
 class Search(Base):
