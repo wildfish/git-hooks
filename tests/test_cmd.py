@@ -660,3 +660,27 @@ class CmdSearch(TestCase):
                     'hook_type__in': utils.get_hook_names(),
                 }
             )
+
+
+class CmdRemove(TestCase):
+    @given(text(min_size=1, max_size=10, alphabet=string.ascii_letters), sampled_from(utils.get_hook_names()))
+    def test_hook_exists_in___hook_is_deleted(self, name, hook_type):
+        with FakeRepoDir():
+            hook_path = os.path.join(repo.hook_type_directory(hook_type), name)
+
+            with open(hook_path, 'w') as f:
+                f.write('content')
+
+            sys.argv = ['foo', 'uninstall', hook_type, name]
+            cmd.Hooks().run()
+
+            self.assertFalse(os.path.exists(hook_path))
+
+    @given(text(min_size=1, max_size=10, alphabet=string.ascii_letters), sampled_from(utils.get_hook_names()))
+    def test_hook_does_not_exist___logger_is_written_to(self, name, hook_type):
+        with FakeRepoDir():
+            with patch('githooks.cmd.logger.info') as mock_logger:
+                sys.argv = ['foo', 'uninstall', hook_type, name]
+                cmd.Hooks().run()
+
+                mock_logger.assert_called_with('{} hook called "{}" could not be found. SKIPPING.'.format(hook_type, name))

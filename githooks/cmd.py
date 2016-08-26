@@ -186,7 +186,7 @@ class Install(Base):
 
     def add_args(self, parser):
         parser.add_argument('hook_type', nargs='?', help='The hook type to install. If no hook is given the config from "githooks.cfg" or "setup.cfg" is used', default=None, choices=utils.get_hook_names())
-        parser.add_argument('hooks', nargs='*', help='The urls for hooks to install')
+        parser.add_argument('hooks', nargs='*', help='The names/urls for hooks to install')
         parser.add_argument('-u', '--upgrade', help='Flag if hooks should be upgraded with the remote version', action='store_true', dest='upgrade')
         parser.add_argument('-r', '--api-root', help='The url of the repo to use', default='http://www.git-hooks.com/api/v1/', dest='api_root')
 
@@ -307,10 +307,28 @@ class Search(Base):
                 logger.info('  ' + h['content']['description'])
 
 
+class Uninstall(Base):
+    def add_args(self, parser):
+        parser.add_argument('hook_type', nargs='?', help='The hook type to uninstall.', choices=utils.get_hook_names())
+        parser.add_argument('hooks', nargs='*', help='The names for hooks to uninstall')
+
+    def action(self, args):
+        type_dir = repo.hook_type_directory(args.hook_type)
+
+        for hook in args.hooks:
+            hook_path = os.path.join(type_dir, hook)
+
+            if os.path.exists(hook_path):
+                os.remove(hook_path)
+            else:
+                logger.info('{} hook called "{}" could not be found. SKIPPING.'.format(args.hook_type, hook))
+
+
 class Hooks(Base):
     description = 'Manages your commit hooks for you!'
     sub_commands = {
         'init': Init,
         'install': Install,
         'search': Search,
+        'uninstall': Uninstall,
     }
