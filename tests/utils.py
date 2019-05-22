@@ -4,6 +4,8 @@ import tempfile
 
 import sys
 
+import git
+
 from githooks import cmd
 from mock import Mock, patch
 
@@ -19,6 +21,7 @@ class FakeRepoDir(object):
     def __enter__(self):
         self._make_repo_dir()
 
+        git.Repo.init(self.repo_dir)
         self.patches = [
             patch('githooks.cmd.repo.repo_root', Mock(return_value=self.repo_dir)),
             patch('githooks.repo.repo_root', Mock(return_value=self.repo_dir)),
@@ -33,10 +36,10 @@ class FakeRepoDir(object):
         return self
 
     def __exit__(self, *args):
-        shutil.rmtree(self.repo_dir)
-
         for p in reversed(self.patches):
             p.__exit__(*args)
+
+        shutil.rmtree(self.repo_dir)
 
     def _make_repo_dir(self):
         self.repo_dir = tempfile.mkdtemp()

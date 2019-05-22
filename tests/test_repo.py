@@ -33,7 +33,7 @@ class RepoGet(TestCase):
 
 class RepoRepoRoot(TestCase):
     @patch('githooks.repo.get')
-    def test_result_is_the_parent_directory_of_the_git_diretory(self, get_mock):
+    def test_result_is_the_parent_directory_of_the_git_directory(self, get_mock):
         git_dir = os.path.dirname(__file__)
         result = Mock()
         result.git_dir = git_dir

@@ -188,53 +188,25 @@ class Install(Base):
         parser.add_argument('hook_type', nargs='?', help='The hook type to install. If no hook is given the config from "githooks.cfg" or "setup.cfg" is used', default=None, choices=utils.get_hook_names())
         parser.add_argument('hooks', nargs='*', help='The names/urls for hooks to install')
         parser.add_argument('-u', '--upgrade', help='Flag if hooks should be upgraded with the remote version', action='store_true', dest='upgrade')
-        parser.add_argument('-r', '--api-root', help='The url of the repo to use', default='http://www.git-hooks.com/api/v1/', dest='api_root')
+        parser.add_argument('-y', '--yes', help='Flag if all hooks should be installed without prompting', action='store_true', dest='yes')
 
     def action(self, args):
         if args.hook_type:
-            self._install_hooks(args.hook_type, args.hooks, args.upgrade, args.api_root)
+            self._install_hooks(args.hook_type, args.hooks, args.upgrade, args.yes)
         else:
             for hook_type, hooks in self.config.items():
-                self._install_hooks(hook_type, hooks, args.upgrade, args.api_root)
+                self._install_hooks(hook_type, hooks, args.upgrade, args.yes)
 
     def _name_from_uri(self, uri):
         path = urlsplit(uri).path
         return posixpath.basename(path)
 
-    def _uri_and_checksum_from_name(self, name, hook_type, api_root):
-        response = requests.get(
-            urljoin(api_root, 'hooks/'),
-            params={
-                'name': name,
-                'page_size': 1,
-                'hook_type': hook_type
-            }
-        )
-
-        res = response.json()
-        if res['count'] > 0:
-            content = res['results'][0]['content']
-            return content['download_url'], content['checksum']
-        return '', None
-
-    def _check_checksum(self, content, checksum):
-        # if the hook is installed from uri rather than the api there will be no checksum
-        if not checksum:
-            return True
-
-        return checksum == hashlib.sha256(content).hexdigest()
-
-    def _install_hooks(self, hook_name, hooks, upgrade, api_root):
+    def _install_hooks(self, hook_name, hooks, upgrade, install_all=False):
         type_repo = repo.hook_type_directory(hook_name)
 
         for hook in hooks:
-            # figure out if we are installing a hook by name or uri
-            uri, checksum = self._uri_and_checksum_from_name(hook, hook_name, api_root)
-            if uri:
-                name = hook
-            else:
-                name = self._name_from_uri(hook)
-                uri = hook
+            name = self._name_from_uri(hook)
+            uri = hook
 
             # check if we need to skip based on the hook alread existing
             if not upgrade and os.path.exists(os.path.join(type_repo, name)):
@@ -243,12 +215,19 @@ class Install(Base):
 
             response = requests.get(uri)
 
-            # make sure the content hasn't been tampered with
-            if not self._check_checksum(response.content, checksum):
-                logger.info(u'"Checksum didn\'t match for "{0}". SKIPPING.'.format(name))
-                continue
+            # print file content so that it can be checked before installing
+            if not install_all:
+                logger.info('## Installing {} from {}'.format(name, uri))
+
+                for line in response.content.decode().split('\n'):
+                    logger.info(line)
+
+                if not input('Continue? [y/N]: ').lower() in ['y', 'yes']:
+                    logger.info('Not installing {} from {}'.format(name, uri))
+                    continue
 
             # save the hook
+            logger.info('Installing {} from {}'.format(name, uri))
             dst = os.path.join(type_repo, name)
             with open(dst, 'wb') as f:
                 f.write(response.content)
@@ -275,38 +254,6 @@ class Install(Base):
         return self._config
 
 
-class Search(Base):
-    description = 'Search a repository for hooks'
-
-    def add_args(self, parser):
-        parser.add_argument('query', help='The search query')
-        parser.add_argument('-t', '--hook-types', nargs='*', help='The hook types to search for.', default=utils.get_hook_names(), choices=utils.get_hook_names(), dest='hook_types')
-        parser.add_argument('-r', '--api-root', help='The url of the repo to use', default='http://www.git-hooks.com/api/v1/', dest='api_root')
-        parser.add_argument('-n', '--max-results', help='The maximum number of results to retrieve', default=20, dest='max_results', type=int)
-
-    def fetch(self, args):
-        url = urljoin(args.api_root, 'hooks/')
-
-        return requests.get(url, params={
-            'q': args.query,
-            'page_size': args.max_results,
-            'hook_type__in': args.hook_types,
-        }).json()['results']
-
-    def action(self, args):
-        results = self.fetch(args)
-
-        for t in args.hook_types:
-            logger.info('')
-            logger.info(t)
-            logger.info('=' * len(t))
-            logger.info('')
-
-            for h in (_h for _h in results if _h['content']['hook_type'] == t):
-                logger.info(h['name'])
-                logger.info('  ' + h['content']['description'])
-
-
 class Uninstall(Base):
     def add_args(self, parser):
         parser.add_argument('hook_type', nargs='?', help='The hook type to uninstall.', choices=utils.get_hook_names())
@@ -329,6 +276,5 @@ class Hooks(Base):
     sub_commands = {
         'init': Init,
         'install': Install,
-        'search': Search,
         'uninstall': Uninstall,
     }
